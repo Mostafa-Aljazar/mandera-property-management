@@ -48,7 +48,7 @@ export function OwnersToolbar({
     reset,
     formState: { errors },
   } = useForm<OwnersFilterValues>({
-    resolver: zodResolver(ownersFilterSchema),
+    resolver: zodResolver(ownersFilterSchema) as any,
     defaultValues: {
       q,
       status: initialStatus,
@@ -66,7 +66,7 @@ export function OwnersToolbar({
 
   function navigate(values: OwnersFilterValues) {
     startTransition(() => {
-      router.push(buildOwnersHref({ ...values, page: 1 }));
+      router.push(buildOwnersHref({ ...values, page: 1 } as any));
     });
   }
 
@@ -78,7 +78,7 @@ export function OwnersToolbar({
   return (
     <div className="relative rounded-2xl border border-[#16445B]/8 bg-white p-3 shadow-[0_10px_36px_rgba(15,42,55,0.04)] sm:p-4">
       <form
-        onSubmit={handleSubmit(navigate)}
+        onSubmit={handleSubmit(navigate as any)}
         className="flex flex-col gap-3"
         noValidate
       >

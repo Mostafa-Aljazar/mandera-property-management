@@ -2,6 +2,7 @@ import "server-only";
 import { createRouteClient } from "@/lib/supabase/route";
 import type { IOwnerProfile } from "@/types/owner.type";
 import { apiError } from "./response";
+import { openApiError } from "./openapi-response";
 
 const OWNER_PROFILE_COLUMNS =
   "id, role, full_name, email, phone, avatar_url, is_active, account_status, national_id, valid_until, company_name, city, created_at, deleted_at";
@@ -18,6 +19,21 @@ type AuthResult =
   | { ok: true; ctx: AuthedOwnerContext }
   | { ok: false; response: Response };
 
+type AuthFailureReason =
+  | "missing_token"
+  | "invalid_token"
+  | "profile_not_found"
+  | "not_owner"
+  | "inactive";
+
+const AUTH_FAILURE_MESSAGES: Record<AuthFailureReason, { message: string; status: number }> = {
+  missing_token: { message: "رمز الدخول مفقود", status: 401 },
+  invalid_token: { message: "رمز الدخول غير صالح أو منتهي", status: 401 },
+  profile_not_found: { message: "تعذر العثور على الحساب", status: 401 },
+  not_owner: { message: "هذا الحساب غير مصرح له بالدخول عبر تطبيق الملاك", status: 403 },
+  inactive: { message: "الحساب معطّل أو محذوف", status: 403 },
+};
+
 function extractBearerToken(request: Request): string | null {
   const header = request.headers.get("authorization");
   if (!header?.toLowerCase().startsWith("bearer ")) return null;
@@ -25,20 +41,18 @@ function extractBearerToken(request: Request): string | null {
   return token.length > 0 ? token : null;
 }
 
+type InternalAuthResult =
+  | { ok: true; ctx: AuthedOwnerContext }
+  | { ok: false; reason: AuthFailureReason };
+
 /**
  * Validates the `Authorization: Bearer <jwt>` header, confirms the JWT
  * belongs to an active, non-deleted `owner`, and returns a Supabase client
  * scoped to that user's session (RLS-enforced) for the route to use.
  */
-export async function requireOwner(request: Request): Promise<AuthResult> {
+async function authenticateOwner(request: Request): Promise<InternalAuthResult> {
   const token = extractBearerToken(request);
-
-  if (!token) {
-    return {
-      ok: false,
-      response: apiError("unauthorized", "رمز الدخول مفقود", 401),
-    };
-  }
+  if (!token) return { ok: false, reason: "missing_token" };
 
   const supabase = createRouteClient(token);
   const {
@@ -46,12 +60,7 @@ export async function requireOwner(request: Request): Promise<AuthResult> {
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
-    return {
-      ok: false,
-      response: apiError("unauthorized", "رمز الدخول غير صالح أو منتهي", 401),
-    };
-  }
+  if (userError || !user) return { ok: false, reason: "invalid_token" };
 
   const { data: profile, error: profileError } = await supabase
     .from("users")
@@ -59,30 +68,9 @@ export async function requireOwner(request: Request): Promise<AuthResult> {
     .eq("id", user.id)
     .single();
 
-  if (profileError || !profile) {
-    return {
-      ok: false,
-      response: apiError("unauthorized", "تعذر العثور على الحساب", 401),
-    };
-  }
-
-  if (profile.role !== "owner") {
-    return {
-      ok: false,
-      response: apiError(
-        "forbidden",
-        "هذا الحساب غير مصرح له بالدخول عبر تطبيق الملاك",
-        403,
-      ),
-    };
-  }
-
-  if (profile.deleted_at || !profile.is_active) {
-    return {
-      ok: false,
-      response: apiError("forbidden", "الحساب معطّل أو محذوف", 403),
-    };
-  }
+  if (profileError || !profile) return { ok: false, reason: "profile_not_found" };
+  if (profile.role !== "owner") return { ok: false, reason: "not_owner" };
+  if (profile.deleted_at || !profile.is_active) return { ok: false, reason: "inactive" };
 
   const ownerProfile: IOwnerProfile = {
     id: profile.id,
@@ -100,8 +88,33 @@ export async function requireOwner(request: Request): Promise<AuthResult> {
     created_at: profile.created_at,
   };
 
-  return {
-    ok: true,
-    ctx: { supabase, ownerId: user.id, profile: ownerProfile },
-  };
+  return { ok: true, ctx: { supabase, ownerId: user.id, profile: ownerProfile } };
+}
+
+/**
+ * For the legacy `/api/v1/owner/**` routes — error responses use the
+ * `{success:false, error:{code,message}}` envelope (`src/lib/api/response.ts`).
+ */
+export async function requireOwner(request: Request): Promise<AuthResult> {
+  const result = await authenticateOwner(request);
+  if (result.ok) return result;
+
+  const { message, status } = AUTH_FAILURE_MESSAGES[result.reason];
+  const code = status === 403 ? "forbidden" : "unauthorized";
+  return { ok: false, response: apiError(code, message, status) };
+}
+
+/**
+ * For the flat `/api/v1/**` routes matching `docs/openapi.yaml` — error
+ * responses use the spec's flat `{message}` shape (`ErrorResponse`), via
+ * `src/lib/api/openapi-response.ts`. `requireOwner()` returns the legacy
+ * `{success:false, error:{...}}` shape instead, which the mobile client's
+ * `response.data['message']` read would silently miss.
+ */
+export async function requireOwnerOpenApi(request: Request): Promise<AuthResult> {
+  const result = await authenticateOwner(request);
+  if (result.ok) return result;
+
+  const { message, status } = AUTH_FAILURE_MESSAGES[result.reason];
+  return { ok: false, response: openApiError(message, status) };
 }

@@ -1,5 +1,17 @@
 import type { Enums } from "@/lib/supabase/database.types";
 
+interface IOwnerNotificationPreferences {
+  overdue_payment: boolean;
+  contract_expiring: boolean;
+  payment_recorded: boolean;
+  maintenance_update: boolean;
+}
+
+interface IOwnerSettings {
+  language: "ar" | "en";
+  notification_preferences: IOwnerNotificationPreferences;
+}
+
 interface IOwnerProfile {
   id: string;
   role: Enums<"user_role">;
@@ -23,4 +35,15 @@ interface IOwnerSession {
   owner: IOwnerProfile;
 }
 
-export type { IOwnerProfile, IOwnerSession };
+interface IOwnerProfileDetails extends IOwnerProfile {
+  id_document_url: string | null;
+  settings: IOwnerSettings;
+}
+
+export type {
+  IOwnerProfile,
+  IOwnerProfileDetails,
+  IOwnerSession,
+  IOwnerSettings,
+  IOwnerNotificationPreferences,
+};

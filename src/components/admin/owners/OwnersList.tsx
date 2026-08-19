@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 export type OwnerListItem = {
   id: string;
   full_name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
   is_active: boolean;
   account_status: string | null;

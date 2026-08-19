@@ -1,0 +1,84 @@
+# ملاحظات على docs/openapi.yaml — لمبرمج الموبايل
+
+> هاد الملف يوثّق ثغرات/تناقضات لقيناها فعلياً أثناء بناء الـ backend مطابق لـ `openapi.yaml`، **إضافة** على قائمة `x-backend-decisions-required` الموجودة أصلاً بأول الملف (تلك موثّقة من الملف نفسه، ما بنكررها هون إلا لما نحتاج نوضّح كيف حسمناها فعلياً بالتطبيق).
+
+---
+
+## 1. `CreateMaintenanceRequest` ما فيه `tenant_id`، بس `MaintenanceRequest.tenant_name` مطلوب (non-nullable)
+
+الـ request بتاع POST `/maintenance-requests` فيه `property_id`, `unit_id`, `category`, `priority`, `description` بس — ما فيه أي حقل لتحديد المستأجر. بالمقابل، الـ response model (`MaintenanceRequest`) بيطلب `tenant_name` كحقل **مطلوب** (مش nullable).
+
+**كيف حسمناها بالتطبيق:** الـ backend بيستنتج المستأجر تلقائياً من العقد النشط (`active`/`expiring_soon`) المرتبط بالـ `unit_id` المرسل. لو الوحدة ما إلها مستأجر حالياً (شاغرة)، بيرجع `tenant_name: ""`.
+
+**سؤال للمبرمج:** هل هاد الافتراض صحيح (يعني طلب الصيانة دايماً مرتبط بوحدة فيها مستأجر حالي)؟ ولو لأ، شو المفروض يصير لما توصل الاستجابة وما في مستأجر؟
+
+---
+
+## 2. `CreateTenantRequest` فيها حقلين `phone` و`mobile` مطلوبين، بس `Tenant` response فيها حقل واحد بس `phone`
+
+مش واضح شو الفرق المقصود بين الحقلين (هاتف أرضي مقابل جوال؟ رقمين جوال؟). بما إن الـ response ما بيفرّق بينهم إطلاقاً، مافي طريقة نعرف أي وحدة منهم المفروض ترجع بـ `phone`.
+
+**كيف حسمناها بالتطبيق:** بنخزّن قيمة `mobile` بعمود `phone` بقاعدة البيانات (باعتباره رقم التواصل الفعلي الأهم)، وقيمة `phone` بتنقبل بالـ validation بس ما بتنخزن. لو المبرمج قاصد شي تاني (مثلاً يحتاج الاثنين يرجعوا لاحقاً بالـ response)، لازم migration عمود إضافي + تحديث الـ spec.
+
+---
+
+## 3. `CreateUnitRequest.status` مطلوب عند الإنشاء — بيسمح بحالة غير متسقة مع `current_contract`
+
+الـ spec بيطلب من العميل يحدد `status` (`available`/`rented`/`maintenance`) وقت إنشاء الوحدة. لو العميل بعت `status: "rented"` لوحدة جديدة بدون أي عقد مرتبط فيها، الـ response بترجع `status: "rented"` بس `current_contract: null` — حالة متناقضة منطقياً (وحدة "مؤجّرة" بدون عقد).
+
+**كيف حسمناها بالتطبيق:** ما عملنا أي validation إضافي يمنع هاي الحالة — قبلنا قيمة `status` كما إجت من العميل حرفياً متل ما الـ spec بيطلب. لو حابب نمنعها، لازم قرار: يا الـ backend يفرض `status: "available"` دايماً عند الإنشاء (متجاهلين قيمة العميل)، يا نوثّق إنه مسؤولية العميل يبعت قيمة منطقية.
+
+---
+
+## 4. حقول الـ "نمو/تريند" (`growth_percent`, `revenue_growth_percent`, `expenses_change_percent`, `net_income_growth_percent`) ما إلها تعريف واضح لفترة المقارنة
+
+كل الـ GET endpoints بتتنادى **بدون أي query parameters** (مافي `?start_date=`/`?period=`)، يعني الـ backend لازم يقرر وحده "نمو مقارنة بشو بالضبط؟". افترضنا:
+- `Property.revenue_growth_percent` / `expenses_change_percent`: لسه مو محسوبة فعلياً (ثابتة 0) — تحتاج تاريخ بيانات مخزّن (snapshots شهرية) ما هو موجود حالياً.
+- `DashboardFinancialSummary.net_income_growth_percent`: محسوبة كمقارنة الشهر الحالي بالشهر اللي قبله (`collected` بس، مش `net_income` كامل).
+- `OverdueSummary.growth_percent`: ثابتة 0 دايماً (مافي بيانات تاريخية نقارن فيها أصلاً).
+
+**سؤال للمبرمج:** إذا هاي الأرقام رح تنعرض بشكل بارز بالتطبيق (رسم بياني، مؤشر أخضر/أحمر)، لازم نتفق على تعريف دقيق لفترة المقارنة قبل ما نعتبرها جاهزة — حالياً هي بس placeholder منطقي مش قياس حقيقي.
+
+---
+
+## 5. `Contract.status` مقصور على (`active`/`expiring_soon`/`expired`) — ما في مسار لإنهاء عقد مبكراً بعقد الموبايل الجديد
+
+قاعدة البيانات عندنا فيها حالات إضافية (`terminated`, `renewed`) من نظام قديم بيدعم تجديد/إنهاء العقود يدوياً — بس هاي العمليات مش موجودة إطلاقاً بـ `openapi.yaml` الحالي (لا `POST /contracts/{id}/terminate` ولا `renew`).
+
+**كيف حسمناها بالتطبيق:** `GET /contracts` الجديد بيستثني العقود المُنهاة/المجدَّدة من القائمة تماماً (بما إن الـ enum المتفق عليه ما بيتحملها). العمليات القديمة لسه شغالة بس على المسار القديم `/api/v1/owner/contracts/:id/{renew,terminate}` (غير مستخدمة من التطبيق الحالي حسب تصريح الـ spec نفسه). موثّقة بـ [`docs/اضافات-مستقبلية/عقود-تجديد-وإنهاء.md`](اضافات-مستقبلية/عقود-تجديد-وإنهاء.md).
+
+---
+
+## 6. رموز الأخطاء الفعلية (404/409/422) أوسع من الموثّق بالـ spec (400/401/500 بس)
+
+كل الـ endpoints موثّقة بـ 400/401/500 (وبعضها 409 لـ register). عملياً، الـ backend بيرجع كمان 404 (مورد غير موجود، مثلاً tenant_id غلط) و409 (تعارض، مثلاً وحدة مش متاحة) و422 (validation فشلت). هاد **مش كسر للعقد عملياً** لأن الـ Flutter client (حسب توثيق الـ spec نفسه فـ`Failure.from()`) بيقرأ `response.data['message']` من أي استجابة مش 2xx بغض النظر عن رقم الحالة بالضبط — بس حبينا نوثّقها هون كمرجع دقيق.
+
+---
+
+## 7. `POST /auth/register` بيقبل `username` بس ما في عمود له بقاعدة البيانات
+
+جدول `users` ما فيه عمود `username` — الحقل بينقبل بالـ validation وبعدين بينرمى (مش مخزّن). لو المبرمج بده يعرضه لاحقاً (مثلاً كـ public handle)، لازم migration عمود جديد.
+
+---
+
+## 8. رفع الملفات: `multipart/form-data` بحقول `binary` بيتعارض مع حد Vercel (~4.5MB) على الـ request body
+
+هاد مش خطأ بالـ spec نفسه (منطقي تماماً لتطبيق REST عادي) — بس نتيجة اختيار الاستضافة (Vercel serverless functions) بتحدد حجم الـ request body الكلي بـ 4.5 ميجا تقريباً، وهاد أصغر من صور كتير من كاميرات الموبايل الحديثة.
+
+**الحل المُضاف:** endpoint جديد `POST /uploads/sign` (مش موجود بالـ `openapi.yaml`، إضافة من طرفنا) بيرجع Supabase signed upload URL — الموبايل بيرفع الملف مباشرة لـ Supabase Storage (بدون ما يمر عبر Vercel إطلاقاً)، وبعدين بيبعت الـ `public_url` الراجعة كـ **نص عادي** بنفس حقل الملف (`photo`, `personal_photo`, `id_photo`, `images[]`, `receipt`) بدل الملف الخام. الـ create endpoints عندنا صارت تقبل الشكلين (ملف خام أو نص URL) بنفس الحقل، فما في كسر توافق فوري — بس **لازم تنسيق مع فريق الموبايل** لتبني هاي الخطوة الإضافية (call signed-upload أول، ارفع للـ URL، بعدين ابعت الـ create request)، لأنها مش موجودة بالـ Dart code الحالي المرسل.
+
+مثال على الاستخدام:
+```
+POST /uploads/sign
+{ "bucket": "tenant-photos", "content_type": "image/jpeg" }
+
+→ { "bucket": "tenant-photos", "path": "...", "token": "...",
+    "signed_url": "https://.../object/upload/sign/...",
+    "public_url": "https://.../object/public/tenant-photos/..." }
+
+# الموبايل يرفع الملف مباشرة لـ signed_url (PUT)، بعدين:
+
+POST /tenants (multipart كالمعتاد)
+personal_photo = "https://.../object/public/tenant-photos/..."   ← نص بدل binary
+id_photo = <binary>   ← لسه ممكن يبعتها binary عادي لو صغيرة
+```

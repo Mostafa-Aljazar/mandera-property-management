@@ -415,6 +415,7 @@ export type Database = {
           city: string | null
           created_at: string
           deleted_at: string | null
+          district: string | null
           id: string
           image_url: string | null
           latitude: number | null
@@ -429,6 +430,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           deleted_at?: string | null
+          district?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -443,6 +445,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           deleted_at?: string | null
+          district?: string | null
           id?: string
           image_url?: string | null
           latitude?: number | null
@@ -470,7 +473,10 @@ export type Database = {
           full_name: string
           id: string
           id_document_url: string | null
+          is_verified: boolean | null
           national_id: string | null
+          nationality: string | null
+          nationality_code: string | null
           owner_id: string
           phone: string | null
           photo_url: string | null
@@ -483,7 +489,10 @@ export type Database = {
           full_name: string
           id?: string
           id_document_url?: string | null
+          is_verified?: boolean | null
           national_id?: string | null
+          nationality?: string | null
+          nationality_code?: string | null
           owner_id: string
           phone?: string | null
           photo_url?: string | null
@@ -496,7 +505,10 @@ export type Database = {
           full_name?: string
           id?: string
           id_document_url?: string | null
+          is_verified?: boolean | null
           national_id?: string | null
+          nationality?: string | null
+          nationality_code?: string | null
           owner_id?: string
           phone?: string | null
           photo_url?: string | null
@@ -514,48 +526,60 @@ export type Database = {
       }
       units: {
         Row: {
+          amenities: string[] | null
+          annual_rent: number | null
           area: number | null
           bathrooms: number | null
-          bedrooms: number | null
           created_at: string
           deleted_at: string | null
-          floor: string | null
+          floor: number | null
           id: string
+          images: string[] | null
           owner_id: string
           property_id: string
           rent_amount: number
+          rent_period: Database["public"]["Enums"]["rent_period"]
+          rooms: number | null
           status: Database["public"]["Enums"]["unit_status"]
           unit_number: string
           unit_type: Database["public"]["Enums"]["unit_type"]
           updated_at: string
         }
         Insert: {
+          amenities?: string[] | null
+          annual_rent?: number | null
           area?: number | null
           bathrooms?: number | null
-          bedrooms?: number | null
           created_at?: string
           deleted_at?: string | null
-          floor?: string | null
+          floor?: number | null
           id?: string
+          images?: string[] | null
           owner_id: string
           property_id: string
           rent_amount?: number
+          rent_period?: Database["public"]["Enums"]["rent_period"]
+          rooms?: number | null
           status?: Database["public"]["Enums"]["unit_status"]
           unit_number: string
           unit_type?: Database["public"]["Enums"]["unit_type"]
           updated_at?: string
         }
         Update: {
+          amenities?: string[] | null
+          annual_rent?: number | null
           area?: number | null
           bathrooms?: number | null
-          bedrooms?: number | null
           created_at?: string
           deleted_at?: string | null
-          floor?: string | null
+          floor?: number | null
           id?: string
+          images?: string[] | null
           owner_id?: string
           property_id?: string
           rent_amount?: number
+          rent_period?: Database["public"]["Enums"]["rent_period"]
+          rooms?: number | null
           status?: Database["public"]["Enums"]["unit_status"]
           unit_number?: string
           unit_type?: Database["public"]["Enums"]["unit_type"]
@@ -592,10 +616,12 @@ export type Database = {
           id: string
           id_document_url: string | null
           is_active: boolean
+          job_title: string | null
           national_id: string | null
           notes: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          settings: Json
           updated_at: string
           valid_until: string | null
         }
@@ -612,10 +638,12 @@ export type Database = {
           id: string
           id_document_url?: string | null
           is_active?: boolean
+          job_title?: string | null
           national_id?: string | null
           notes?: string | null
           phone?: string | null
           role: Database["public"]["Enums"]["user_role"]
+          settings?: Json
           updated_at?: string
           valid_until?: string | null
         }
@@ -632,10 +660,12 @@ export type Database = {
           id?: string
           id_document_url?: string | null
           is_active?: boolean
+          job_title?: string | null
           national_id?: string | null
           notes?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          settings?: Json
           updated_at?: string
           valid_until?: string | null
         }
@@ -664,10 +694,24 @@ export type Database = {
         | "terminated"
         | "renewed"
       device_type: "android" | "ios"
-      expense_type: "maintenance" | "water" | "electricity" | "other"
-      maintenance_issue_type: "plumbing" | "electrical" | "ac" | "other"
+      expense_type:
+        | "maintenance"
+        | "water"
+        | "electricity"
+        | "other"
+        | "cleaning"
+        | "services"
+      maintenance_issue_type:
+        | "plumbing"
+        | "electrical"
+        | "ac"
+        | "other"
+        | "appliances"
+        | "doors_locks"
+        | "paint"
+        | "water_leak"
       maintenance_priority: "low" | "medium" | "high"
-      maintenance_status: "pending" | "in_progress" | "closed"
+      maintenance_status: "new_request" | "in_progress" | "completed"
       notification_type:
         | "overdue_payment"
         | "contract_expiring"
@@ -675,11 +719,25 @@ export type Database = {
         | "maintenance_update"
       owner_account_status: "active" | "inactive" | "pending"
       payment_cycle: "monthly" | "quarterly" | "yearly"
-      payment_method: "cash" | "bank_transfer" | "card"
-      payment_status: "pending" | "paid" | "overdue"
-      property_type: "building" | "villa" | "complex" | "other"
-      unit_status: "vacant" | "occupied" | "maintenance"
-      unit_type: "apartment" | "shop" | "office" | "other"
+      payment_method:
+        | "cash"
+        | "bank_transfer"
+        | "card"
+        | "mada"
+        | "sadad"
+        | "other"
+      payment_status: "due" | "paid" | "overdue"
+      property_type: "residential" | "commercial" | "mixed_use"
+      rent_period: "monthly" | "annually"
+      unit_status: "available" | "rented" | "maintenance"
+      unit_type:
+        | "apartment"
+        | "shop"
+        | "office"
+        | "other"
+        | "studio"
+        | "villa"
+        | "warehouse"
       user_role: "master_admin" | "owner"
     }
     CompositeTypes: {
@@ -816,22 +874,55 @@ export const Constants = {
         "renewed",
       ],
       device_type: ["android", "ios"],
-      expense_type: ["maintenance", "water", "electricity", "other"],
-      maintenance_issue_type: ["plumbing", "electrical", "ac", "other"],
+      expense_type: [
+        "maintenance",
+        "water",
+        "electricity",
+        "other",
+        "cleaning",
+        "services",
+      ],
+      maintenance_issue_type: [
+        "plumbing",
+        "electrical",
+        "ac",
+        "other",
+        "appliances",
+        "doors_locks",
+        "paint",
+        "water_leak",
+      ],
       maintenance_priority: ["low", "medium", "high"],
-      maintenance_status: ["pending", "in_progress", "closed"],
+      maintenance_status: ["new_request", "in_progress", "completed"],
       notification_type: [
         "overdue_payment",
         "contract_expiring",
         "payment_recorded",
         "maintenance_update",
       ],
+      owner_account_status: ["active", "inactive", "pending"],
       payment_cycle: ["monthly", "quarterly", "yearly"],
-      payment_method: ["cash", "bank_transfer", "card"],
-      payment_status: ["pending", "paid", "overdue"],
-      property_type: ["building", "villa", "complex", "other"],
-      unit_status: ["vacant", "occupied", "maintenance"],
-      unit_type: ["apartment", "shop", "office", "other"],
+      payment_method: [
+        "cash",
+        "bank_transfer",
+        "card",
+        "mada",
+        "sadad",
+        "other",
+      ],
+      payment_status: ["due", "paid", "overdue"],
+      property_type: ["residential", "commercial", "mixed_use"],
+      rent_period: ["monthly", "annually"],
+      unit_status: ["available", "rented", "maintenance"],
+      unit_type: [
+        "apartment",
+        "shop",
+        "office",
+        "other",
+        "studio",
+        "villa",
+        "warehouse",
+      ],
       user_role: ["master_admin", "owner"],
     },
   },

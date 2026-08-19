@@ -1,16 +1,13 @@
 import { z } from "zod";
-import { isValidPhoneNumber } from "libphonenumber-js";
 
 export const createTenantSchema = z.object({
-  full_name: z.string().trim().min(2, "الاسم يجب ألا يقل عن حرفين").max(120, "الاسم طويل جداً"),
-  national_id: z.string().trim().max(40, "رقم الهوية طويل جداً").optional().nullable(),
-  phone: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal(""))
-    .refine((v) => !v || isValidPhoneNumber(v), "رقم الهاتف غير صالح"),
-  email: z.string().trim().email("البريد الإلكتروني غير صالح").max(254).optional().or(z.literal("")),
+  full_name: z.string().trim().min(1, "الاسم الكامل مطلوب").max(150, "الاسم طويل جداً"),
+  national_id: z.string().trim().min(1, "رقم الهوية مطلوب").max(30, "رقم الهوية طويل جداً"),
+  nationality_code: z.string().trim().length(2, "رمز الجنسية يجب أن يكون حرفين (ISO)"),
+  nationality: z.string().trim().min(1, "الجنسية مطلوبة"),
+  email: z.string().trim().email("البريد الإلكتروني غير صالح"),
+  phone: z.string().trim().min(1, "رقم الهاتف مطلوب"),
+  mobile: z.string().trim().min(1, "رقم الجوال مطلوب"),
 });
 
 export type CreateTenantValues = z.infer<typeof createTenantSchema>;
