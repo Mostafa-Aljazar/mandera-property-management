@@ -146,12 +146,19 @@ info:
     Served copy of the spec the mobile team sent
     (`docs/new/openapi.yaml`, reverse-engineered from the Flutter client) —
     every path/schema below is implemented and live at `/api/v1/*` in this
-    repo. One addition beyond the original file: `POST /uploads/sign` (tag
-    "Uploads"), needed because Vercel caps request bodies at ~4.5MB — see
-    `docs/openapi-issues.md` §8 for why and how the mobile client needs to
-    adopt it. Everything else — description, decisions-required notes, and
-    all original schemas — is unchanged from the mobile team's file; do not
-    treat this copy as a redefinition of their contract.
+    repo, matching the mobile team's contract exactly (including plain
+    `multipart/form-data` binary file uploads on every create endpoint, as
+    originally specified). One OPTIONAL addition beyond the original file:
+    `POST /uploads/sign` (tag "Uploads") — NOT part of the mobile team's
+    contract and NOT required. It exists only as an opt-in alternative for
+    files too large for Vercel's ~4.5MB request body cap: the client may
+    request a Supabase signed upload URL, upload directly to it, then pass
+    the resulting public URL as a string in the same file field instead of
+    raw binary. Every create endpoint accepts either form. See
+    `docs/openapi-issues.md` §8 for details. Everything else — description,
+    decisions-required notes, and all original schemas — is unchanged from
+    the mobile team's file; do not treat this copy as a redefinition of
+    their contract.
   version: 1.1.0
   x-backend-decisions-required:
     - id: login-not-wired
@@ -256,11 +263,8 @@ info:
         list every country.
 
 servers:
-  - url: https://api.yourdomain.com/v1
-    description: >-
-      Placeholder base URL copied verbatim from EndPoints.baseUrl in the
-      Flutter client ("Change to your actual domain" per its own comment).
-      Not a real, reachable backend.
+  - url: https://mandera-property-management.vercel.app/api/v1
+    description: Live backend deployment.
 
 tags:
   - name: Auth
@@ -702,16 +706,19 @@ paths:
     post:
       operationId: signUpload
       tags: [Uploads]
-      summary: Get a Supabase signed upload URL for a file
+      summary: "(Optional) Get a Supabase signed upload URL for a file"
       description: >-
-        Not part of the original mobile spec — added so file bytes can go
-        straight to Supabase Storage instead of through this API, since
-        Vercel caps request bodies at ~4.5MB (see docs/openapi-issues.md §8).
-        Call this first, PUT the file to `signed_url`, then submit
-        `public_url` as a plain string in the same multipart field the
-        target endpoint documents as `format: binary` (e.g. `photo`,
-        `personal_photo`, `id_photo`, `images[]`, `receipt`) — every create
-        endpoint with a file field accepts either shape.
+        ⚠️ OPTIONAL — not part of the mobile team's contract and not
+        required. Every create endpoint works with a plain
+        `multipart/form-data` binary file exactly as the original spec
+        documents; this endpoint is only an opt-in alternative for files too
+        large for Vercel's ~4.5MB request body cap (see
+        docs/openapi-issues.md §8). Call this first, PUT the file to
+        `signed_url`, then submit `public_url` as a plain string in the same
+        multipart field the target endpoint documents as `format: binary`
+        (e.g. `photo`, `personal_photo`, `id_photo`, `images[]`, `receipt`)
+        instead of the raw file. Every create endpoint with a file field
+        accepts either shape — use whichever fits.
       requestBody:
         required: true
         content:
