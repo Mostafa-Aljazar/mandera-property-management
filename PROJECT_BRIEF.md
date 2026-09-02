@@ -40,8 +40,8 @@
 - **Region**: `eu-west-1`
 - الـ Database Schema **مطبّق بالكامل فعلياً** على هذا المشروع (10 جداول + كل الـ enums + RLS policies + sequence لرقم العقد).
 - **أول حساب Master Admin موجود فعلياً**:
-  - الإيميل: `mostafaibrahim20032020@gmail.com`
-  - كلمة المرور: `Mostafa123` (يُنصح تغييرها لاحقاً من واجهة النظام)
+  - الإيميل: `admin@admin.com`
+  - كلمة المرور: `admin@admin.com` (بيئة تطوير فقط — لازم تتغير قبل أي نشر production)
 
 > **مهم:** لازم تجيب الـ Supabase API keys (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, و `SUPABASE_SERVICE_ROLE_KEY`) من Supabase Dashboard → المشروع `mandera-properties-management` → Settings → API، وتحطهم بملف `.env.local`.
 

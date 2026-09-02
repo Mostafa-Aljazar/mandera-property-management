@@ -117,6 +117,33 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Admin dashboard brand theme — scoped so it never leaks into the public site/login. */
+[data-admin-theme] {
+  --primary: oklch(0.367 0.063 234.136); /* BRAND.navy #16445B */
+  --primary-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.603 0.235 26.909); /* BRAND.red #ED1B24 */
+  --ring: oklch(0.367 0.063 234.136);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.279 0.041 260.031);
+  --sidebar-primary: oklch(0.367 0.063 234.136);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.367 0.063 234.136 / 0.1);
+  --sidebar-accent-foreground: oklch(0.367 0.063 234.136);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.367 0.063 234.136);
+}
+
+.dark [data-admin-theme] {
+  --primary: oklch(0.55 0.06 234.136);
+  --primary-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.65 0.22 26.909);
+  --ring: oklch(0.55 0.06 234.136);
+  --sidebar-primary: oklch(0.55 0.06 234.136);
+  --sidebar-accent: oklch(0.55 0.06 234.136 / 0.16);
+  --sidebar-accent-foreground: oklch(0.9 0.02 234.136);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

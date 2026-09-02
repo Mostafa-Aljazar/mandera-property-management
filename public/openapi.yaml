@@ -110,6 +110,31 @@
 #     "SA"), resolved client-side from a local country-name → ISO-code map
 #     since the Flutter country picker package doesn't provide them.
 #     `country`/`nationality` are the plain English country name string.
+# 16. Brokers (POST/GET /brokers) exist fully in the Flutter client
+#     (create-broker screen, broker list/search) but were missing entirely
+#     from earlier drafts of this spec — added here. `POST /brokers` is
+#     wired to the network; `GET /brokers` still returns Flutter demo data
+#     (see BrokersRepository.getBrokers TODO). The broker's identifying
+#     document field was recently renamed client-side from `national_id` to
+#     `commercial_license_number` — brokers are treated as licensed
+#     businesses/offices, not individuals, unlike tenants (who keep
+#     `national_id`).
+# 17. POST /units/vacant-report/send is a real, wired endpoint
+#     (UnitsRepository.sendVacantUnitsReport) with no corresponding
+#     EXPLICIT feature tag before now — the Flutter client renders a PDF of
+#     vacant units client-side and uploads the finished file bytes plus a
+#     `broker_id` for the backend to deliver to that broker. No response
+#     body is read (Future<void>).
+# 18. The create-property screen's country picker is now restricted
+#     client-side to three markets — United Arab Emirates (AE), Oman (OM),
+#     Saudi Arabia (SA) — out of the ~250-country bundled dataset. This is
+#     a Flutter-side UI filter only (see CreatePropertyView.
+#     _allowedCountryIsoCodes); `country_code`/`country` in
+#     CreatePropertyRequest are still plain strings with no server-side
+#     enum. Decide whether the backend should also validate/enforce this
+#     restriction, or treat it as advisory. Note this restriction does NOT
+#     apply to broker/tenant nationality pickers, which still list all
+#     countries.
 # =============================================================================
 
 openapi: 3.0.3
@@ -119,15 +144,15 @@ info:
   description: >-
     Property/tenant/contract/payment/expense/maintenance management backend.
     Served copy of the spec the mobile team sent
-    (`docs/openapi.yaml`, reverse-engineered from the Flutter client) — every
-    path/schema below is implemented and live at `/api/v1/*` in this repo.
-    One addition beyond the original file: `POST /uploads/sign` (tag
+    (`docs/new/openapi.yaml`, reverse-engineered from the Flutter client) —
+    every path/schema below is implemented and live at `/api/v1/*` in this
+    repo. One addition beyond the original file: `POST /uploads/sign` (tag
     "Uploads"), needed because Vercel caps request bodies at ~4.5MB — see
     `docs/openapi-issues.md` §8 for why and how the mobile client needs to
     adopt it. Everything else — description, decisions-required notes, and
     all original schemas — is unchanged from the mobile team's file; do not
     treat this copy as a redefinition of their contract.
-  version: 1.0.0
+  version: 1.1.0
   x-backend-decisions-required:
     - id: login-not-wired
       summary: >-
@@ -207,10 +232,30 @@ info:
       summary: >-
         country_code/nationality_code are ISO 3166-1 alpha-2 codes (e.g.
         "SA"), resolved client-side from a static name→code map.
+    - id: brokers-added
+      summary: >-
+        POST/GET /brokers were missing from earlier drafts of this spec
+        despite being fully implemented client-side; added now. POST is
+        wired to the network, GET still returns demo data. The broker
+        identity field was recently renamed from national_id to
+        commercial_license_number (brokers are licensed businesses, not
+        individuals).
+    - id: vacant-units-report-endpoint
+      summary: >-
+        POST /units/vacant-report/send is a real, wired endpoint newly
+        documented here: the client renders a vacant-units PDF and uploads
+        it with a broker_id for the backend to deliver. Response body
+        unread (Future<void>).
+    - id: property-country-restricted-client-side
+      summary: >-
+        The create-property country picker is now filtered client-side to
+        AE/OM/SA only, out of the full bundled country list. Purely a
+        Flutter UI restriction — country_code/country remain unconstrained
+        strings server-side. Decide if the backend should also enforce
+        this. Broker/tenant nationality pickers are unaffected and still
+        list every country.
 
 servers:
-  - url: /api/v1
-    description: This app, relative to whatever origin is serving this page (works with "Try it out").
   - url: https://api.yourdomain.com/v1
     description: >-
       Placeholder base URL copied verbatim from EndPoints.baseUrl in the
@@ -224,6 +269,8 @@ tags:
     description: The signed-in user's own account/profile.
   - name: Tenants
     description: Tenant records and their lease/document summaries.
+  - name: Brokers
+    description: Real estate broker/agency directory.
   - name: Properties
     description: Property (building/compound) records.
   - name: Units
@@ -486,6 +533,63 @@ paths:
           $ref: '#/components/responses/ServerError'
 
   # ===========================================================================
+  # Brokers
+  # ===========================================================================
+  /brokers:
+    get:
+      operationId: getBrokers
+      tags: [Brokers]
+      summary: List all brokers
+      description: >-
+        Currently served from Flutter demo data (see
+        BrokersRepository.getBrokers TODO) — called with no parameters,
+        search happens client-side over the full list. Broker has no
+        fromJson; schema INFERRED.
+      responses:
+        '200':
+          description: All brokers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Broker'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: createBroker
+      tags: [Brokers]
+      summary: Create a broker
+      description: >-
+        Wired via DioHelper.postData with multipart/form-data (one required
+        personal photo). CreateBrokerCubit discards the response body
+        (Future<void>). The broker's identifying document is
+        `commercial_license_number` (brokers are treated as licensed
+        businesses/offices, not individuals — see
+        x-backend-decisions-required: brokers-added).
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateBrokerRequest'
+      responses:
+        '201':
+          description: Broker created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broker'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # ===========================================================================
   # Properties
   # ===========================================================================
   /properties:
@@ -588,6 +692,78 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # ===========================================================================
+  # Uploads (backend addition — not in the mobile team's original file)
+  # ===========================================================================
+  /uploads/sign:
+    post:
+      operationId: signUpload
+      tags: [Uploads]
+      summary: Get a Supabase signed upload URL for a file
+      description: >-
+        Not part of the original mobile spec — added so file bytes can go
+        straight to Supabase Storage instead of through this API, since
+        Vercel caps request bodies at ~4.5MB (see docs/openapi-issues.md §8).
+        Call this first, PUT the file to `signed_url`, then submit
+        `public_url` as a plain string in the same multipart field the
+        target endpoint documents as `format: binary` (e.g. `photo`,
+        `personal_photo`, `id_photo`, `images[]`, `receipt`) — every create
+        endpoint with a file field accepts either shape.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadSignRequest'
+      responses:
+        '200':
+          description: Signed upload URL ready to use.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSignResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /units/vacant-report/send:
+    post:
+      operationId: sendVacantUnitsReport
+      tags: [Units]
+      summary: Send a vacant-units report to a broker
+      description: >-
+        ⚠️ Newly documented — see x-backend-decisions-required:
+        vacant-units-report-endpoint. Wired via DioHelper.postData with
+        multipart/form-data. The client renders the report as a PDF itself
+        and uploads the finished bytes; the backend is expected to deliver
+        it to the referenced broker (email/WhatsApp/etc. — not specified by
+        the client). SendVacantUnitsReportCubit discards the response body
+        (Future<void>).
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendVacantUnitsReportRequest'
+      responses:
+        '200':
+          description: Report delivered.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: broker_id does not match an existing broker.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -849,43 +1025,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DashboardSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
-  # ===========================================================================
-  # Uploads (backend addition — not in the mobile team's original file)
-  # ===========================================================================
-  /uploads/sign:
-    post:
-      operationId: signUpload
-      tags: [Uploads]
-      summary: Get a Supabase signed upload URL for a file
-      description: >-
-        Not part of the original mobile spec — added so file bytes can go
-        straight to Supabase Storage instead of through this API, since
-        Vercel caps request bodies at ~4.5MB (see docs/openapi-issues.md §8).
-        Call this first, PUT the file to `signed_url`, then submit
-        `public_url` as a plain string in the same multipart field the
-        target endpoint documents as `format: binary` (e.g. `photo`,
-        `personal_photo`, `id_photo`, `images[]`, `receipt`) — every create
-        endpoint with a file field accepts either shape.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UploadSignRequest'
-      responses:
-        '200':
-          description: Signed upload URL ready to use.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UploadSignResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -1218,6 +1357,106 @@ components:
           format: binary
 
     # =========================================================================
+    # Brokers
+    # =========================================================================
+    Broker:
+      type: object
+      description: >-
+        INFERRED — Broker has no fromJson; field names snake_cased. A
+        broker represents a licensed real-estate agency/office, not an
+        individual — hence commercial_license_number rather than a
+        national ID (see x-backend-decisions-required: brokers-added).
+      required:
+        - id
+        - full_name
+        - commercial_license_number
+        - phone
+        - mobile
+        - nationality_label
+      properties:
+        id:
+          type: string
+          example: '1'
+        full_name:
+          type: string
+          example: عبد الرحمن سعيد القحطاني
+        company_name:
+          type: string
+          nullable: true
+          example: شركة القحطاني العقارية
+        commercial_license_number:
+          type: string
+          example: '1122334455'
+        phone:
+          type: string
+          example: 2233 456 011
+        mobile:
+          type: string
+          example: '966502233445'
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: abdulrahman.q@example.com
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+          example: https://i.pravatar.cc/150?img=15
+        nationality_label:
+          type: string
+          example: السعودية
+        is_verified:
+          type: boolean
+          default: false
+
+    CreateBrokerRequest:
+      type: object
+      description: >-
+        EXACT — CreateBrokerRequest.toFormData(). Sent as multipart/
+        form-data (one required personal photo). `company_name` is a
+        non-nullable String field (always sent) even though the UI marks it
+        optional — an unfilled field arrives as an empty string, not an
+        omitted key.
+      required:
+        - full_name
+        - company_name
+        - commercial_license_number
+        - nationality_code
+        - nationality
+        - email
+        - phone
+        - mobile
+        - personal_photo
+      properties:
+        full_name:
+          type: string
+        company_name:
+          type: string
+          description: Always present; empty string when the user leaves it blank.
+        commercial_license_number:
+          type: string
+        nationality_code:
+          type: string
+          description: >-
+            ISO 3166-1 alpha-2 (see x-backend-decisions-required:
+            country-code-format).
+          example: SA
+        nationality:
+          type: string
+          example: Saudi Arabia
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        mobile:
+          type: string
+        personal_photo:
+          type: string
+          format: binary
+
+    # =========================================================================
     # Properties
     # =========================================================================
     PropertyType:
@@ -1522,6 +1761,25 @@ components:
           items:
             type: string
             format: binary
+
+    SendVacantUnitsReportRequest:
+      type: object
+      description: >-
+        EXACT — SendVacantUnitsReportRequest.toFormData(). Sent as
+        multipart/form-data. The report is rendered to a PDF entirely
+        client-side (see x-backend-decisions-required:
+        vacant-units-report-endpoint) and uploaded as a finished file —
+        the backend does not generate or format it.
+      required: [broker_id, report]
+      properties:
+        broker_id:
+          type: string
+          description: References Broker.id.
+          example: '1'
+        report:
+          type: string
+          format: binary
+          description: Client-rendered PDF of vacant units.
 
     # =========================================================================
     # Payments

@@ -6,7 +6,7 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-black/5 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-8">
-        <Link href="/" className="shrink-0">
+        <Link href="/login" className="shrink-0">
           <Image
             src={IMG_LOGO}
             alt="Mandera Property Management"

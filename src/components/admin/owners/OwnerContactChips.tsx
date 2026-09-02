@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const chipClass =
-  "flex w-full items-center gap-2 rounded-xl bg-[#f7fafb] px-3 py-2.5 text-sm text-[#5b6b73] transition-colors hover:bg-[#eef3f5] hover:text-[#16445B]";
+  "flex w-full items-center gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground";
 
 function whatsappHref(phone: string) {
   const digits = phone.replace(/\D/g, "");
@@ -57,7 +57,7 @@ export function OwnerContactChips({
               />
             }
           >
-            <Mail className="size-3.5 shrink-0 text-[#8a969c]" />
+            <Mail className="size-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate" dir="ltr">
               {email}
             </span>
@@ -78,7 +78,7 @@ export function OwnerContactChips({
               />
             }
           >
-            <Phone className="size-3.5 shrink-0 text-[#8a969c]" />
+            <Phone className="size-3.5 shrink-0 text-muted-foreground" />
             <span dir="ltr">{phone}</span>
           </TooltipTrigger>
           <TooltipContent side="top">فتح واتساب</TooltipContent>
@@ -99,7 +99,7 @@ export function OwnerContactChips({
             {copied ? (
               <Check className="size-3.5 shrink-0 text-emerald-600" />
             ) : (
-              <IdCard className="size-3.5 shrink-0 text-[#8a969c]" />
+              <IdCard className="size-3.5 shrink-0 text-muted-foreground" />
             )}
             <span dir="ltr">{nationalId}</span>
           </TooltipTrigger>

@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Search } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { BRAND } from "@/lib/brand";
-import { cn } from "@/lib/utils";
 import {
   buildOwnersHref,
   ownersFilterSchema,
@@ -76,7 +76,7 @@ export function OwnersToolbar({
   }
 
   return (
-    <div className="relative rounded-2xl border border-[#16445B]/8 bg-white p-3 shadow-[0_10px_36px_rgba(15,42,55,0.04)] sm:p-4">
+    <Card className="p-3 sm:p-4">
       <form
         onSubmit={handleSubmit(navigate as any)}
         className="flex flex-col gap-3"
@@ -84,12 +84,12 @@ export function OwnersToolbar({
       >
         <div className="flex gap-2">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 inset-s-3 size-4 -translate-y-1/2 text-[#8a969c]" />
+            <Search className="pointer-events-none absolute top-1/2 inset-s-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
               placeholder="ابحث بالاسم أو البريد أو الهاتف..."
               aria-invalid={!!errors.q}
-              className="h-11 rounded-xl border-[#16445B]/12 bg-[#f7fafb] pe-3 ps-10 text-start"
+              className="h-10 pe-3 ps-10 text-start"
               {...register("q")}
             />
           </div>
@@ -101,8 +101,7 @@ export function OwnersToolbar({
                   type="submit"
                   disabled={pending}
                   aria-label="بحث"
-                  className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 sm:rounded-full sm:px-5"
-                  style={{ backgroundColor: BRAND.navy }}
+                  className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
                 />
               }
             >
@@ -116,34 +115,24 @@ export function OwnersToolbar({
         </div>
 
         {errors.q && (
-          <p className="text-xs text-[#ED1B24]">{errors.q.message}</p>
+          <p className="text-xs text-destructive">{errors.q.message}</p>
         )}
 
-        <div className="-mx-1 overflow-x-auto px-1 scrollbar-none">
-          <div className="flex w-max min-w-full gap-1 rounded-full border border-[#16445B]/10 bg-[#f7fafb] p-1 sm:w-full sm:min-w-0">
-            {statusTabs.map((tab) => {
-              const isActive = currentStatus === tab.value;
-
-              return (
-                <button
-                  key={tab.value}
-                  type="button"
-                  disabled={pending}
-                  onClick={() => onStatusChange(tab.value)}
-                  className={cn(
-                    "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-60 sm:flex-1 sm:px-4",
-                    isActive
-                      ? "bg-[#16445B] text-white shadow-sm"
-                      : "text-[#5b6b73] hover:text-[#16445B]",
-                  )}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <Tabs
+          value={currentStatus}
+          onValueChange={(value) =>
+            onStatusChange(value as OwnersFilterValues["status"])
+          }
+        >
+          <TabsList className="w-full sm:w-fit">
+            {statusTabs.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} disabled={pending}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </form>
-    </div>
+    </Card>
   );
 }

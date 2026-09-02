@@ -55,6 +55,8 @@ export const UPLOAD_BUCKETS = {
   "tenant-documents": { maxSize: 5 * 1024 * 1024, mimeTypes: ALLOWED_IMAGE_TYPES },
   "maintenance-images": { maxSize: 5 * 1024 * 1024, mimeTypes: ALLOWED_IMAGE_TYPES },
   "payment-receipts": { maxSize: 10 * 1024 * 1024, mimeTypes: ALLOWED_DOCUMENT_TYPES },
+  "broker-photos": { maxSize: 5 * 1024 * 1024, mimeTypes: ALLOWED_IMAGE_TYPES },
+  "vacant-reports": { maxSize: 10 * 1024 * 1024, mimeTypes: ["application/pdf"] as const },
 } as const;
 
 export type UploadBucket = keyof typeof UPLOAD_BUCKETS;

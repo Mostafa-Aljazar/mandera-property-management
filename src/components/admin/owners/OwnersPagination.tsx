@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import {
   Pagination,
   PaginationContent,
@@ -8,7 +9,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { buildOwnersHref } from "@/validations/ownersFilter.schema";
-import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 function pageNumbers(current: number, total: number) {
@@ -50,16 +50,10 @@ export function OwnersPagination({
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#16445B]/8 bg-white px-3 py-3.5 shadow-[0_10px_36px_rgba(15,42,55,0.04)] sm:flex-row sm:justify-between sm:gap-4 sm:px-5 sm:py-4">
-      <p className="text-xs text-[#5b6b73] sm:text-sm">
-        عرض{" "}
-        <span className="font-semibold" style={{ color: BRAND.navy }}>
-          {from}–{to}
-        </span>{" "}
-        من{" "}
-        <span className="font-semibold" style={{ color: BRAND.navy }}>
-          {totalCount}
-        </span>
+    <Card className="flex-row flex-wrap items-center justify-between gap-3 px-3 py-3.5 sm:px-5 sm:py-4">
+      <p className="text-xs text-muted-foreground sm:text-sm">
+        عرض <span className="font-semibold text-foreground">{from}–{to}</span>{" "}
+        من <span className="font-semibold text-foreground">{totalCount}</span>
       </p>
 
       <Pagination className="mx-0 w-full justify-center sm:w-auto sm:justify-end">
@@ -90,13 +84,8 @@ export function OwnersPagination({
                     isActive={p === page}
                     className={cn(
                       p === page &&
-                        "border-transparent hover:opacity-90",
+                        "border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
                     )}
-                    style={
-                      p === page
-                        ? { backgroundColor: BRAND.navy, color: "white" }
-                        : undefined
-                    }
                   >
                     {p}
                   </PaginationLink>
@@ -117,6 +106,6 @@ export function OwnersPagination({
           </PaginationItem>
         </PaginationContent>
       </Pagination>
-    </div>
+    </Card>
   );
 }

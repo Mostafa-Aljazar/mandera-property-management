@@ -146,16 +146,6 @@ export default function LoginPage() {
           <Suspense fallback={null}>
             <LoginForm />
           </Suspense>
-
-          <p className="mt-8 text-center text-sm text-[#8a969c]">
-            لست مدير المنصة؟{" "}
-            <Link
-              href="/"
-              className="font-medium text-[#16445B] transition-colors hover:text-[#ED1B24]"
-            >
-              العودة للرئيسية
-            </Link>
-          </p>
         </div>
       </div>
     </main>

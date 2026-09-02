@@ -105,7 +105,7 @@ export async function requireOwner(request: Request): Promise<AuthResult> {
 }
 
 /**
- * For the flat `/api/v1/**` routes matching `docs/openapi.yaml` — error
+ * For the flat `/api/v1/**` routes matching `docs/new/openapi.yaml` — error
  * responses use the spec's flat `{message}` shape (`ErrorResponse`), via
  * `src/lib/api/openapi-response.ts`. `requireOwner()` returns the legacy
  * `{success:false, error:{...}}` shape instead, which the mobile client's

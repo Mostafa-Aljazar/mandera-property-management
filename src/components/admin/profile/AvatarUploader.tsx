@@ -6,8 +6,7 @@ import { Camera, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { BRAND } from "@/lib/brand";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const MAX_SIZE = 2 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -103,24 +102,13 @@ export function AvatarUploader({
         className="group relative shrink-0 disabled:opacity-60"
         aria-label="تغيير الصورة الشخصية"
       >
-        <Avatar
-          className="size-24 ring-4 ring-white shadow-[0_12px_32px_rgba(15,42,55,0.16)] sm:size-28"
-          style={{ backgroundColor: `${BRAND.navy}14` }}
-        >
+        <Avatar size="lg" className="size-24 sm:size-28">
           {preview && <AvatarImage src={preview} alt={fullName} />}
-          <AvatarFallback
-            className="text-2xl font-bold"
-            style={{ color: BRAND.navy, backgroundColor: `${BRAND.navy}14` }}
-          >
+          <AvatarFallback className="text-2xl font-bold">
             {initials || "؟"}
           </AvatarFallback>
         </Avatar>
-        <span
-          className={cn(
-            "absolute inset-e-0 bottom-0 flex size-9 items-center justify-center rounded-full text-white shadow-md ring-2 ring-white transition-transform group-hover:scale-105",
-          )}
-          style={{ backgroundColor: BRAND.red }}
-        >
+        <span className="absolute inset-e-0 bottom-0 flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-2 ring-background transition-transform group-hover:scale-105">
           {uploading ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
@@ -137,25 +125,25 @@ export function AvatarUploader({
           className="hidden"
           onChange={handleFileChange}
         />
-        <p className="font-bold" style={{ color: BRAND.navy }}>
-          {fullName || "حساب الأدمن"}
-        </p>
-        <p className="mt-1 text-sm leading-6 text-[#5b6b73]">
+        <p className="font-semibold">{fullName || "حساب الأدمن"}</p>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
           JPG / PNG / WEBP — حتى 2MB
         </p>
-        <button
+        <Button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          variant="outline"
+          size="sm"
+          className="mt-3"
           disabled={uploading}
-          className="mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#16445B]/15 bg-white px-4 text-sm font-semibold text-[#16445B] transition-colors hover:bg-[#f7fafb] disabled:opacity-60"
+          onClick={() => inputRef.current?.click()}
         >
           {uploading ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 className="animate-spin" />
           ) : (
-            <Upload className="size-4" />
+            <Upload />
           )}
           {uploading ? "جارٍ الرفع..." : "تغيير الصورة"}
-        </button>
+        </Button>
       </div>
     </div>
   );

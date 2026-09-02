@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Plus, Users } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Reveal } from "@/components/common/Reveal";
+import { Button } from "@/components/ui/button";
 import { OwnersList } from "@/components/admin/owners/OwnersList";
 import { OwnersPagination } from "@/components/admin/owners/OwnersPagination";
 import { OwnersToolbar } from "@/components/admin/owners/OwnersToolbar";
-import { BRAND } from "@/lib/brand";
 import {
   OWNERS_PAGE_SIZE,
   ownersFilterSchema,
@@ -95,89 +94,57 @@ export default async function OwnersPage({
   }
 
   return (
-    <div className="relative space-y-5 sm:space-y-7">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -inset-x-4 -top-6 h-48 bg-[radial-gradient(ellipse_at_top,rgba(22,68,91,0.06),transparent_60%)] sm:-inset-x-6 sm:-top-8 sm:h-56"
-      />
-
-      <Reveal>
-        <div className="relative flex items-start justify-between gap-3 sm:items-end sm:gap-5">
-          <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#16445B]/10 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#16445B]/70 shadow-sm sm:px-3 sm:text-xs">
-              <Users className="size-3.5" style={{ color: BRAND.red }} />
-              إدارة الحسابات
-            </div>
-            <h1
-              className="mt-2.5 text-xl font-bold tracking-tight sm:mt-3 sm:text-3xl"
-              style={{ color: BRAND.navy }}
-            >
-              الملاك
-            </h1>
-            <p className="mt-1.5 text-sm leading-6 text-[#5b6b73] sm:mt-2 sm:leading-7">
-              {totalCount === 0
-                ? "لا توجد نتائج مطابقة حالياً"
-                : `${totalCount} حساب${totalCount === 1 ? "" : "ات"}`}
-            </p>
-          </div>
-
-          <Link
-            href="/admin/owners/new"
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(237,27,36,0.28)] transition-all duration-300 hover:opacity-95 sm:h-11 sm:gap-2 sm:px-5"
-            style={{ backgroundColor: BRAND.red }}
-          >
-            <Plus className="size-4" />
-            <span className="sm:hidden">إضافة</span>
-            <span className="hidden sm:inline">إضافة مالك</span>
-          </Link>
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-3 sm:items-center">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight">الملاك</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {totalCount === 0
+              ? "لا توجد نتائج مطابقة حالياً"
+              : `${totalCount} حساب${totalCount === 1 ? "" : "ات"}`}
+          </p>
         </div>
-      </Reveal>
 
-      <Reveal delay={80}>
-        <OwnersToolbar q={q} status={status} />
-      </Reveal>
+        <Button nativeButton={false} render={<Link href="/admin/owners/new" />}>
+          <Plus />
+          <span className="sm:hidden">إضافة</span>
+          <span className="hidden sm:inline">إضافة مالك</span>
+        </Button>
+      </div>
 
-      <Reveal delay={140}>
-        {pageOwners.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[#16445B]/15 bg-white px-6 py-16 text-center shadow-[0_10px_36px_rgba(15,42,55,0.03)]">
-            <div
-              className="mx-auto flex size-14 items-center justify-center rounded-full"
-              style={{ backgroundColor: `${BRAND.navy}12`, color: BRAND.navy }}
-            >
-              <Users className="size-6" />
-            </div>
-            <h2
-              className="mt-5 text-lg font-bold"
-              style={{ color: BRAND.navy }}
-            >
-              لا يوجد ملاك هنا
-            </h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-7 text-[#5b6b73]">
-              جرّب تغيير البحث أو الفلتر، أو أضف مالكاً جديداً للمنصة.
-            </p>
-            <Link
-              href="/admin/owners/new"
-              className="mt-6 inline-flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold text-white"
-              style={{ backgroundColor: BRAND.red }}
-            >
-              <Plus className="size-4" />
-              إضافة مالك
-            </Link>
+      <OwnersToolbar q={q} status={status} />
+
+      {pageOwners.length === 0 ? (
+        <div className="rounded-xl border border-dashed px-6 py-16 text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Users className="size-6" />
           </div>
-        ) : (
-          <div className="space-y-4">
-            <OwnersList owners={pageOwners} />
-            <OwnersPagination
-              page={page}
-              totalPages={totalPages}
-              totalCount={totalCount}
-              pageSize={OWNERS_PAGE_SIZE}
-              q={q}
-              status={status}
-            />
-          </div>
-        )}
-      </Reveal>
+          <h2 className="mt-5 text-lg font-semibold">لا يوجد ملاك هنا</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-7 text-muted-foreground">
+            جرّب تغيير البحث أو الفلتر، أو أضف مالكاً جديداً للمنصة.
+          </p>
+          <Button
+            nativeButton={false}
+            render={<Link href="/admin/owners/new" />}
+            className="mt-6"
+          >
+            <Plus />
+            إضافة مالك
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <OwnersList owners={pageOwners} />
+          <OwnersPagination
+            page={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={OWNERS_PAGE_SIZE}
+            q={q}
+            status={status}
+          />
+        </div>
+      )}
     </div>
   );
 }

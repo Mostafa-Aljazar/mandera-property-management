@@ -8,15 +8,8 @@ import { IMG_LOGO } from "@/assets";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
-const nav = [
-  { href: "/#how", label: "كيف يعمل" },
-  { href: "/#platform", label: "المنصة" },
-  { href: "/#roles", label: "الأدوار" },
-] as const;
-
 export function SiteHeader() {
   const pathname = usePathname();
-  const onLogin = pathname === "/login";
   const onAuthFlow =
     pathname === "/forgot-password" || pathname === "/reset-password";
 
@@ -24,7 +17,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-30 border-b border-black/5 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
         <Link
-          href="/"
+          href="/login"
           className="flex shrink-0 items-center transition-transform duration-300 hover:scale-[1.02]"
         >
           <Image
@@ -38,26 +31,14 @@ export function SiteHeader() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-medium text-[#16445B]/75 md:flex">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="transition-colors hover:text-[#16445B]"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        {onLogin || onAuthFlow ? (
+        {onAuthFlow ? (
           <Link
-            href={onAuthFlow ? "/login" : "/"}
+            href="/login"
             className={cn(
               "inline-flex h-10 items-center gap-2 rounded-full border border-[#16445B]/15 bg-white px-4 text-sm font-semibold text-[#16445B] transition-colors hover:border-[#16445B]/30 hover:bg-[#f7fafb]",
             )}
           >
-            {onAuthFlow ? "تسجيل الدخول" : "الصفحة الرئيسية"}
+            تسجيل الدخول
           </Link>
         ) : (
           <Link

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AdminHeader } from "@/components/site/AdminHeader";
-import { SiteFooter } from "@/components/site/SiteFooter";
+import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
+import { AdminTopbar } from "@/components/admin/layout/AdminTopbar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AdminLayout({
   children,
@@ -38,16 +39,19 @@ export default async function AdminLayout({
     .toUpperCase();
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-[#f7fafb]">
-      <AdminHeader
-        fullName={profile.full_name}
-        avatarUrl={profile.avatar_url}
-        initials={initials}
-      />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
-        {children}
-      </main>
-      <SiteFooter />
-    </div>
+    <SidebarProvider
+      data-admin-theme=""
+      style={{ "--sidebar-width": "13.5rem" } as React.CSSProperties}
+    >
+      <AdminSidebar />
+      <SidebarInset>
+        <AdminTopbar
+          fullName={profile.full_name}
+          avatarUrl={profile.avatar_url}
+          initials={initials}
+        />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -3,13 +3,22 @@
 import Link from "next/link";
 import { CalendarDays, Mail, Phone } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { OwnersActionsMenu } from "@/components/admin/owners/OwnersActionsMenu";
-import { BRAND } from "@/lib/brand";
 import { formatDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -31,18 +40,18 @@ function statusBadge(status: string | null | undefined, isActive: boolean) {
   if (resolved === "pending") {
     return {
       label: "معلّق",
-      className: "bg-amber-50 text-amber-800 ring-amber-200/60",
+      className: "border-amber-200 bg-amber-50 text-amber-800",
     };
   }
   if (resolved === "inactive") {
     return {
       label: "معطّل",
-      className: "bg-[#f0f3f5] text-[#6b7a82] ring-[#d8dee2]",
+      className: "border-border bg-muted text-muted-foreground",
     };
   }
   return {
     label: "نشط",
-    className: "bg-emerald-50 text-emerald-700 ring-emerald-200/60",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
   };
 }
 
@@ -60,23 +69,14 @@ function OwnerMobileCard({ owner }: { owner: OwnerListItem }) {
   const badge = statusBadge(owner.account_status, owner.is_active);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-[#16445B]/8 bg-white shadow-[0_10px_28px_rgba(15,42,55,0.05)]">
+    <Card className="overflow-hidden py-0">
       <div className="flex items-start gap-3 p-4">
         <Link href={`/admin/owners/${owner.id}`} className="shrink-0">
-          <Avatar
-            className="size-12 ring-2 ring-[#16445B]/10 sm:size-14"
-            style={{ backgroundColor: `${BRAND.navy}14` }}
-          >
+          <Avatar size="lg">
             {owner.avatar_url && (
               <AvatarImage src={owner.avatar_url} alt={owner.full_name} />
             )}
-            <AvatarFallback
-              className="text-sm font-bold"
-              style={{
-                color: BRAND.navy,
-                backgroundColor: `${BRAND.navy}14`,
-              }}
-            >
+            <AvatarFallback className="text-sm font-bold">
               {initialsOf(owner.full_name) || "؟"}
             </AvatarFallback>
           </Avatar>
@@ -87,28 +87,19 @@ function OwnerMobileCard({ owner }: { owner: OwnerListItem }) {
             <div className="min-w-0 flex-1">
               <Link
                 href={`/admin/owners/${owner.id}`}
-                className="block truncate text-[15px] font-bold leading-snug transition-colors hover:text-[#ED1B24] sm:text-base"
-                style={{ color: BRAND.navy }}
+                className="block truncate text-[15px] font-semibold leading-snug text-foreground transition-colors hover:text-primary sm:text-base"
               >
                 {owner.full_name}
               </Link>
-              <p
-                className="mt-0.5 truncate text-xs text-[#8a969c]"
-                dir="ltr"
-              >
+              <p className="mt-0.5 truncate text-xs text-muted-foreground" dir="ltr">
                 {owner.national_id || "بدون هوية"}
               </p>
             </div>
 
             <div className="flex shrink-0 items-center gap-1">
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset",
-                  badge.className,
-                )}
-              >
+              <Badge variant="outline" className={cn(badge.className)}>
                 {badge.label}
-              </span>
+              </Badge>
               <OwnersActionsMenu
                 ownerId={owner.id}
                 isActive={owner.account_status === "active"}
@@ -118,15 +109,12 @@ function OwnerMobileCard({ owner }: { owner: OwnerListItem }) {
         </div>
       </div>
 
-      <div className="space-y-0 border-t border-[#16445B]/06 bg-[#f7fafb]/70 px-4 py-3">
+      <div className="space-y-0 border-t bg-muted/40 px-4 py-3">
         <a
           href={`mailto:${owner.email}`}
-          className="flex items-center gap-2.5 rounded-xl px-1 py-1.5 text-sm text-[#5b6b73] transition-colors hover:bg-white hover:text-[#16445B]"
+          className="flex items-center gap-2.5 rounded-lg px-1 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
         >
-          <span
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg"
-            style={{ backgroundColor: `${BRAND.navy}10`, color: BRAND.navy }}
-          >
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <Mail className="size-3.5" />
           </span>
           <span className="min-w-0 truncate" dir="ltr">
@@ -139,38 +127,24 @@ function OwnerMobileCard({ owner }: { owner: OwnerListItem }) {
             href={`https://wa.me/${owner.phone.replace(/\D/g, "")}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2.5 rounded-xl px-1 py-1.5 text-sm text-[#5b6b73] transition-colors hover:bg-white hover:text-[#16445B]"
+            className="flex items-center gap-2.5 rounded-lg px-1 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
           >
-            <span
-              className="flex size-7 shrink-0 items-center justify-center rounded-lg"
-              style={{ backgroundColor: `${BRAND.navy}10`, color: BRAND.navy }}
-            >
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
               <Phone className="size-3.5" />
             </span>
             <span dir="ltr">{owner.phone}</span>
           </a>
         ) : (
-          <div className="flex items-center gap-2.5 px-1 py-1.5 text-sm text-[#8a969c]">
-            <span
-              className="flex size-7 shrink-0 items-center justify-center rounded-lg"
-              style={{ backgroundColor: `${BRAND.navy}10`, color: BRAND.navy }}
-            >
+          <div className="flex items-center gap-2.5 px-1 py-1.5 text-sm text-muted-foreground">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
               <Phone className="size-3.5" />
             </span>
             بدون هاتف
           </div>
         )}
 
-        <div className="flex items-center gap-2.5 px-1 py-1.5 text-sm text-[#5b6b73]">
-          <span
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg"
-            style={{
-              backgroundColor: owner.valid_until
-                ? `${BRAND.navy}10`
-                : `${BRAND.red}10`,
-              color: owner.valid_until ? BRAND.navy : BRAND.red,
-            }}
-          >
+        <div className="flex items-center gap-2.5 px-1 py-1.5 text-sm text-muted-foreground">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <CalendarDays className="size-3.5" />
           </span>
           <span className="min-w-0">
@@ -180,7 +154,7 @@ function OwnerMobileCard({ owner }: { owner: OwnerListItem }) {
           </span>
         </div>
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -193,152 +167,117 @@ export function OwnersList({ owners }: { owners: OwnerListItem[] }) {
         ))}
       </div>
 
-      <div className="hidden overflow-hidden rounded-2xl border border-[#16445B]/8 bg-white shadow-[0_10px_36px_rgba(15,42,55,0.04)] lg:block">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] text-sm">
-            <thead>
-              <tr className="border-b border-black/5 bg-[#f7fafb]/80 text-start">
-                <th className="px-5 py-3.5 font-semibold text-[#5b6b73]">
-                  المالك
-                </th>
-                <th className="px-5 py-3.5 font-semibold text-[#5b6b73]">
-                  البريد
-                </th>
-                <th className="px-5 py-3.5 font-semibold text-[#5b6b73]">
-                  الهاتف
-                </th>
-                <th className="px-5 py-3.5 font-semibold text-[#5b6b73]">
-                  الحالة
-                </th>
-                <th className="px-5 py-3.5 font-semibold text-[#5b6b73]">
-                  الصلاحية
-                </th>
-                <th className="w-12 px-3 py-3.5" aria-label="إجراءات" />
-              </tr>
-            </thead>
-            <tbody>
-              {owners.map((owner) => {
-                const badge = statusBadge(
-                  owner.account_status,
-                  owner.is_active,
-                );
-                return (
-                  <tr
-                    key={owner.id}
-                    className="border-b border-black/5 transition-colors last:border-0 hover:bg-[#f7fafb]/70"
-                  >
-                    <td className="px-5 py-4">
-                      <Link
-                        href={`/admin/owners/${owner.id}`}
-                        className="flex items-center gap-3"
-                      >
-                        <Avatar
-                          className="size-10 ring-2 ring-[#16445B]/8"
-                          style={{ backgroundColor: `${BRAND.navy}14` }}
+      <Card className="hidden py-0 lg:block">
+        <Table className="min-w-[960px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="px-5 py-3.5">المالك</TableHead>
+              <TableHead className="px-5 py-3.5">البريد</TableHead>
+              <TableHead className="px-5 py-3.5">الهاتف</TableHead>
+              <TableHead className="px-5 py-3.5">الحالة</TableHead>
+              <TableHead className="px-5 py-3.5">الصلاحية</TableHead>
+              <TableHead className="w-12 px-3 py-3.5" aria-label="إجراءات" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {owners.map((owner) => {
+              const badge = statusBadge(owner.account_status, owner.is_active);
+              return (
+                <TableRow key={owner.id}>
+                  <TableCell className="px-5 py-4 whitespace-normal">
+                    <Link
+                      href={`/admin/owners/${owner.id}`}
+                      className="flex items-center gap-3"
+                    >
+                      <Avatar>
+                        {owner.avatar_url && (
+                          <AvatarImage
+                            src={owner.avatar_url}
+                            alt={owner.full_name}
+                          />
+                        )}
+                        <AvatarFallback className="text-xs font-semibold">
+                          {initialsOf(owner.full_name) || "؟"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <span className="block truncate font-semibold text-foreground transition-colors hover:text-primary">
+                          {owner.full_name}
+                        </span>
+                        <span
+                          className="mt-0.5 block truncate text-xs text-muted-foreground"
+                          dir="ltr"
                         >
-                          {owner.avatar_url && (
-                            <AvatarImage
-                              src={owner.avatar_url}
-                              alt={owner.full_name}
-                            />
-                          )}
-                          <AvatarFallback
-                            className="text-xs font-semibold"
-                            style={{
-                              color: BRAND.navy,
-                              backgroundColor: `${BRAND.navy}14`,
-                            }}
-                          >
-                            {initialsOf(owner.full_name) || "؟"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <span
-                            className="block truncate font-semibold transition-colors hover:text-[#ED1B24]"
-                            style={{ color: BRAND.navy }}
-                          >
-                            {owner.full_name}
-                          </span>
-                          <span
-                            className="mt-0.5 block truncate text-xs text-[#8a969c]"
-                            dir="ltr"
-                          >
-                            {owner.national_id || "بدون هوية"}
-                          </span>
-                        </div>
-                      </Link>
-                    </td>
+                          {owner.national_id || "بدون هوية"}
+                        </span>
+                      </div>
+                    </Link>
+                  </TableCell>
 
-                    <td className="px-5 py-4">
+                  <TableCell className="px-5 py-4">
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <a
+                            href={`mailto:${owner.email}`}
+                            className="block max-w-56 truncate text-muted-foreground transition-colors hover:text-foreground"
+                            dir="ltr"
+                          />
+                        }
+                      >
+                        {owner.email}
+                      </TooltipTrigger>
+                      <TooltipContent>فتح البريد</TooltipContent>
+                    </Tooltip>
+                  </TableCell>
+
+                  <TableCell className="px-5 py-4">
+                    {owner.phone ? (
                       <Tooltip>
                         <TooltipTrigger
                           render={
                             <a
-                              href={`mailto:${owner.email}`}
-                              className="block max-w-56 truncate text-[#5b6b73] transition-colors hover:text-[#16445B]"
+                              href={`https://wa.me/${owner.phone.replace(/\D/g, "")}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-muted-foreground transition-colors hover:text-foreground"
                               dir="ltr"
                             />
                           }
                         >
-                          {owner.email}
+                          {owner.phone}
                         </TooltipTrigger>
-                        <TooltipContent>فتح البريد</TooltipContent>
+                        <TooltipContent>فتح واتساب</TooltipContent>
                       </Tooltip>
-                    </td>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
 
-                    <td className="px-5 py-4">
-                      {owner.phone ? (
-                        <Tooltip>
-                          <TooltipTrigger
-                            render={
-                              <a
-                                href={`https://wa.me/${owner.phone.replace(/\D/g, "")}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-[#5b6b73] transition-colors hover:text-[#16445B]"
-                                dir="ltr"
-                              />
-                            }
-                          >
-                            {owner.phone}
-                          </TooltipTrigger>
-                          <TooltipContent>فتح واتساب</TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <span className="text-[#8a969c]">—</span>
-                      )}
-                    </td>
+                  <TableCell className="px-5 py-4">
+                    <Badge variant="outline" className={cn(badge.className)}>
+                      {badge.label}
+                    </Badge>
+                  </TableCell>
 
-                    <td className="px-5 py-4">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset",
-                          badge.className,
-                        )}
-                      >
-                        {badge.label}
-                      </span>
-                    </td>
+                  <TableCell className="px-5 py-4 text-muted-foreground">
+                    {owner.valid_until
+                      ? formatDateShort(owner.valid_until)
+                      : "—"}
+                  </TableCell>
 
-                    <td className="px-5 py-4 text-[#5b6b73]">
-                      {owner.valid_until
-                        ? formatDateShort(owner.valid_until)
-                        : "—"}
-                    </td>
-
-                    <td className="px-3 py-4 text-end">
-                      <OwnersActionsMenu
-                        ownerId={owner.id}
-                        isActive={owner.account_status === "active"}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                  <TableCell className="px-3 py-4 text-end">
+                    <OwnersActionsMenu
+                      ownerId={owner.id}
+                      isActive={owner.account_status === "active"}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

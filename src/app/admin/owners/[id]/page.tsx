@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowRight,
   Building2,
   CalendarDays,
   ExternalLink,
@@ -12,20 +11,27 @@ import {
   IdCard,
   Mail,
   MapPin,
+  MoreVertical,
   Phone,
   UserRound,
   Users,
 } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Reveal } from "@/components/common/Reveal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { OwnerContactChips } from "@/components/admin/owners/OwnerContactChips";
 import { OwnerNotesForm } from "@/components/admin/owners/OwnerNotesForm";
 import {
   DeleteOwnerForm,
   ToggleActiveForm,
 } from "@/components/admin/owners/RowActions";
-import { BRAND } from "@/lib/brand";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -91,18 +97,27 @@ function statusBadge(
   if (deletedAt) {
     return {
       label: "محذوف",
-      className: "bg-[#ED1B24]/10 text-[#ED1B24]",
+      className: "border-destructive/20 bg-destructive/10 text-destructive",
     };
   }
 
   const resolved = status ?? (isActive ? "active" : "inactive");
   if (resolved === "pending") {
-    return { label: "معلّق", className: "bg-amber-50 text-amber-800" };
+    return {
+      label: "معلّق",
+      className: "border-amber-200 bg-amber-50 text-amber-800",
+    };
   }
   if (resolved === "inactive") {
-    return { label: "معطّل", className: "bg-[#f0f3f5] text-[#6b7a82]" };
+    return {
+      label: "معطّل",
+      className: "border-border bg-muted text-muted-foreground",
+    };
   }
-  return { label: "نشط", className: "bg-emerald-50 text-emerald-700" };
+  return {
+    label: "نشط",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  };
 }
 
 function initialsOf(name: string) {
@@ -137,12 +152,7 @@ export default async function OwnerDetailPage({
     { label: "العقارات", value: stats.properties, icon: Building2 },
     { label: "الوحدات", value: stats.units, icon: Home },
     { label: "المستأجرون", value: stats.tenants, icon: Users },
-    {
-      label: "عقود فعّالة",
-      value: stats.activeContracts,
-      icon: FileCheck2,
-      accent: BRAND.red,
-    },
+    { label: "عقود فعّالة", value: stats.activeContracts, icon: FileCheck2 },
   ];
 
   const details = [
@@ -192,161 +202,119 @@ export default async function OwnerDetailPage({
   ];
 
   return (
-    <div className="relative space-y-7">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -inset-x-6 -top-8 h-56 bg-[radial-gradient(ellipse_at_top,rgba(22,68,91,0.06),transparent_60%)]"
-      />
-
-      <Reveal>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/admin/owners"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#16445B]/10 bg-white px-3 py-1.5 text-xs font-semibold text-[#5b6b73] shadow-sm transition-colors hover:border-[#16445B]/20 hover:text-[#16445B]"
-              >
-                <ArrowRight className="size-3.5" />
-                رجوع لقائمة الملاك
-              </Link>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#16445B]/10 bg-white px-3 py-1.5 text-xs font-semibold text-[#16445B]/70 shadow-sm">
-                <UserRound className="size-3.5" style={{ color: BRAND.red }} />
-                ملف المالك
-              </span>
-            </div>
-            <h1
-              className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl"
-              style={{ color: BRAND.navy }}
-            >
-              {owner.full_name}
-            </h1>
-            {(owner.company_name || owner.city) && (
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5b6b73]">
-                {owner.company_name && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Building2 className="size-3.5 text-[#8a969c]" />
-                    {owner.company_name}
-                  </span>
-                )}
-                {owner.company_name && owner.city && (
-                  <span className="text-[#c5ced1]">·</span>
-                )}
-                {owner.city && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <MapPin className="size-3.5 text-[#8a969c]" />
-                    {owner.city}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {!owner.deleted_at && (
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href={`/admin/owners/${owner.id}/edit`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#16445B]/15 bg-white px-3 text-xs font-semibold text-[#16445B] transition-colors hover:border-[#16445B]/30 hover:bg-[#f7fafb]"
-              >
-                تعديل
-              </Link>
-              <ToggleActiveForm
-                ownerId={owner.id}
-                isActive={isAccountActive}
-              />
-              <DeleteOwnerForm ownerId={owner.id} />
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {owner.full_name}
+          </h1>
+          {(owner.company_name || owner.city) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              {owner.company_name && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Building2 className="size-3.5" />
+                  {owner.company_name}
+                </span>
+              )}
+              {owner.company_name && owner.city && <span>·</span>}
+              {owner.city && (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="size-3.5" />
+                  {owner.city}
+                </span>
+              )}
             </div>
           )}
         </div>
-      </Reveal>
 
-      <Reveal delay={70}>
-        <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-[0_10px_36px_rgba(15,42,55,0.04)] sm:p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <Avatar
-              className="size-20 shrink-0 ring-2 ring-[#16445B]/10 sm:size-24"
-              style={{ backgroundColor: `${BRAND.navy}14` }}
+        {!owner.deleted_at && (
+          <div className="flex shrink-0 gap-2">
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href={`/admin/owners/${owner.id}/edit`} />}
             >
-              {owner.avatar_url && (
-                <AvatarImage src={owner.avatar_url} alt={owner.full_name} />
-              )}
-              <AvatarFallback
-                className="text-xl font-bold"
-                style={{
-                  color: BRAND.navy,
-                  backgroundColor: `${BRAND.navy}14`,
-                }}
+              تعديل
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    aria-label="المزيد من الإجراءات"
+                  />
+                }
               >
-                {initialsOf(owner.full_name) || "؟"}
-              </AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={cn(
-                    "rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                    badge.className,
-                  )}
-                >
-                  {badge.label}
-                </span>
-                <span className="text-xs text-[#8a969c]">
-                  منذ {formatDate(owner.created_at)}
-                </span>
-              </div>
-
-              <OwnerContactChips
-                email={owner.email}
-                phone={owner.phone}
-                nationalId={owner.national_id}
-              />
-            </div>
+                <MoreVertical />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <ToggleActiveForm
+                  ownerId={owner.id}
+                  isActive={isAccountActive}
+                  variant="menu"
+                />
+                <DeleteOwnerForm ownerId={owner.id} variant="menu" />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </section>
-      </Reveal>
+        )}
+      </div>
 
-      <Reveal delay={120}>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {statsCards.map((card) => {
-            const accent = card.accent ?? BRAND.navy;
-            return (
-              <div
-                key={card.label}
-                className="rounded-2xl border border-black/5 bg-white px-4 py-4 shadow-[0_10px_36px_rgba(15,42,55,0.04)] sm:px-5"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs text-[#5b6b73] sm:text-sm">
-                    {card.label}
-                  </p>
-                  <div
-                    className="flex size-8 items-center justify-center rounded-xl"
-                    style={{
-                      backgroundColor: `${accent}12`,
-                      color: accent,
-                    }}
-                  >
-                    <card.icon className="size-4" />
-                  </div>
+      <Card>
+        <CardContent className="flex flex-col gap-5 sm:flex-row sm:items-center">
+          <Avatar size="lg">
+            {owner.avatar_url && (
+              <AvatarImage src={owner.avatar_url} alt={owner.full_name} />
+            )}
+            <AvatarFallback className="text-xl font-bold">
+              {initialsOf(owner.full_name) || "؟"}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className={cn(badge.className)}>
+                {badge.label}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                منذ {formatDate(owner.created_at)}
+              </span>
+            </div>
+
+            <OwnerContactChips
+              email={owner.email}
+              phone={owner.phone}
+              nationalId={owner.national_id}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {statsCards.map((card) => (
+          <Card key={card.label}>
+            <CardContent>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-muted-foreground">{card.label}</p>
+                <div className="flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <card.icon className="size-4" />
                 </div>
-                <p
-                  className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl"
-                  style={{ color: BRAND.navy }}
-                >
-                  {card.value}
-                </p>
               </div>
-            );
-          })}
-        </div>
-      </Reveal>
+              <p className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+                {card.value}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       <div className="grid items-stretch gap-5 lg:grid-cols-5">
-        <Reveal delay={160} className="h-full lg:col-span-3">
-          <section className="h-full rounded-2xl border border-black/5 bg-white p-5 shadow-[0_10px_36px_rgba(15,42,55,0.04)] sm:p-6">
-            <h2 className="text-base font-bold" style={{ color: BRAND.navy }}>
-              بيانات الحساب
-            </h2>
-            <p className="mt-1 text-sm text-[#5b6b73]">
+        <Card className="lg:col-span-3">
+          <CardContent>
+            <h2 className="text-base font-semibold">بيانات الحساب</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               معلومات التواصل والهوية المرتبطة بالحساب
             </p>
 
@@ -354,24 +322,17 @@ export default async function OwnerDetailPage({
               {details.map((item) => (
                 <div
                   key={item.label}
-                  className="flex items-start gap-3 rounded-2xl border border-[#16445B]/06 bg-[#f7fafb] p-4"
+                  className="flex items-start gap-3 rounded-lg bg-muted/40 p-4"
                 >
-                  <div
-                    className="flex size-9 shrink-0 items-center justify-center rounded-xl"
-                    style={{
-                      backgroundColor: `${BRAND.navy}12`,
-                      color: BRAND.navy,
-                    }}
-                  >
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                     <item.icon className="size-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-[#8a969c]">
+                    <p className="text-xs font-medium text-muted-foreground">
                       {item.label}
                     </p>
                     <p
                       className="mt-1 break-all text-sm font-semibold leading-6"
-                      style={{ color: BRAND.navy }}
                       dir={item.dir}
                     >
                       {item.value}
@@ -380,30 +341,19 @@ export default async function OwnerDetailPage({
                 </div>
               ))}
             </div>
-          </section>
-        </Reveal>
+          </CardContent>
+        </Card>
 
-        <Reveal delay={220} className="h-full lg:col-span-2">
-          <section className="flex h-full flex-col rounded-2xl border border-black/5 bg-white p-5 shadow-[0_10px_36px_rgba(15,42,55,0.04)] sm:p-6">
+        <Card className="flex h-full flex-col lg:col-span-2">
+          <CardContent className="flex flex-1 flex-col">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2
-                  className="text-base font-bold"
-                  style={{ color: BRAND.navy }}
-                >
-                  مستند الهوية
-                </h2>
-                <p className="mt-1 text-sm text-[#5b6b73]">
+                <h2 className="text-base font-semibold">مستند الهوية</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
                   الصورة المرفوعة مع إنشاء الحساب
                 </p>
               </div>
-              <div
-                className="flex size-9 items-center justify-center rounded-xl"
-                style={{
-                  backgroundColor: `${BRAND.red}12`,
-                  color: BRAND.red,
-                }}
-              >
+              <div className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <FileImage className="size-4" />
               </div>
             </div>
@@ -414,7 +364,7 @@ export default async function OwnerDetailPage({
                   href={owner.id_document_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="group relative min-h-48 flex-1 overflow-hidden rounded-xl border border-[#16445B]/10 bg-[#f7fafb]"
+                  className="group relative min-h-48 flex-1 overflow-hidden rounded-lg border bg-muted/40"
                 >
                   <Image
                     src={owner.id_document_url}
@@ -424,38 +374,39 @@ export default async function OwnerDetailPage({
                     sizes="(max-width: 1024px) 100vw, 360px"
                   />
                 </a>
-                <a
-                  href={owner.id_document_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-full border border-[#16445B]/15 bg-white text-sm font-semibold text-[#16445B] transition-colors hover:bg-[#f7fafb]"
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  nativeButton={false}
+                  render={
+                    <a
+                      href={owner.id_document_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
                 >
-                  <ExternalLink className="size-4" />
+                  <ExternalLink />
                   فتح بحجم كامل
-                </a>
+                </Button>
               </div>
             ) : (
-              <div className="mt-4 flex min-h-48 flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-[#16445B]/15 bg-[#f7fafb] px-4 text-center">
-                <FileImage
-                  className="size-8 opacity-35"
-                  style={{ color: BRAND.navy }}
-                />
-                <p className="mt-3 text-sm text-[#5b6b73]">
+              <div className="mt-4 flex min-h-48 flex-1 flex-col items-center justify-center rounded-lg border border-dashed px-4 text-center">
+                <FileImage className="size-8 text-muted-foreground/50" />
+                <p className="mt-3 text-sm text-muted-foreground">
                   لم يتم رفع مستند هوية بعد
                 </p>
               </div>
             )}
-          </section>
-        </Reveal>
+          </CardContent>
+        </Card>
       </div>
 
-      <Reveal delay={260}>
-        <OwnerNotesForm
-          ownerId={owner.id}
-          notes={owner.notes}
-          disabled={!!owner.deleted_at}
-        />
-      </Reveal>
+      <OwnerNotesForm
+        ownerId={owner.id}
+        notes={owner.notes}
+        disabled={!!owner.deleted_at}
+      />
     </div>
   );
 }

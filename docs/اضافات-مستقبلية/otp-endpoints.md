@@ -3,7 +3,7 @@
 **الحالة:** لم تُبنَ إطلاقاً — لا يوجد كود حالي لها.
 
 ## من الـ spec
-`docs/openapi.yaml` يحتوي `/auth/send-otp` و `/auth/verify-otp`، لكن وصفهما بالملف نفسه يقول إنهما **غير مؤكدين** (unverified):
+`docs/new/openapi.yaml` يحتوي `/auth/send-otp` و `/auth/verify-otp`، لكن وصفهما بالملف نفسه يقول إنهما **غير مؤكدين** (unverified):
 > defined in endpoint.dart but not referenced by any Flutter model, repository, cubit, or screen.
 
 يعني تطبيق الموبايل الحالي (المبني على بيانات ثابتة/demo) لا يستدعي هذين المسارين فعلياً بأي مكان. الـ request/response schema الموجود بالـ spec تخمين (best-guess placeholder) وليس مستخرج من كود Dart فعلي.

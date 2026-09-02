@@ -11,17 +11,17 @@
 - Dashboard بإحصائيات عامة.
 - إدارة Owners كاملة: قائمة (بحث/فلترة/pagination)، إضافة، تعديل، ملاحظات داخلية، تفعيل/تعطيل، حذف (soft delete)، صورة شخصية، مستند هوية.
 - صفحة بروفايل الـ Master Admin (تعديل بيانات + كلمة مرور + صورة).
-- **Owner API أُعيد بناؤه بالكامل ليطابق `docs/openapi.yaml`** (العقد المرسل من فريق الموبايل) — راجع القسم 1 تحت للتفاصيل. الـ REST-ful CRUD القديم تحت `/api/v1/owner/**` تم حذف الجزء المستبدَل منه، وبقي بس الجزء المؤجَّل (موثّق بـ `docs/اضافات-مستقبلية/`).
+- **Owner API أُعيد بناؤه بالكامل ليطابق `docs/new/openapi.yaml`** (العقد المرسل من فريق الموبايل) — راجع القسم 1 تحت للتفاصيل. الـ REST-ful CRUD القديم تحت `/api/v1/owner/**` تم حذف الجزء المستبدَل منه، وبقي بس الجزء المؤجَّل (موثّق بـ `docs/اضافات-مستقبلية/`).
 - Storage buckets: `avatars`, `property-images`, `unit-images` (+ RLS بحسب `auth.uid()`), إضافة لباقي الـ buckets المذكورة بالقسم 5.
-- **صفحة توثيق API حية**: `/api-docs` (Swagger UI، بدون أي CDN — `swagger-ui-dist` مثبّتة كـ dependency و`postinstall` بينسخ ملفاتها لـ `public/swagger-ui/`) بتعرض `public/openapi.yaml` (نسخة عن `docs/openapi.yaml` الأصلي + إضافة `/uploads/sign`).
+- **صفحة توثيق API حية**: `/api-docs` (Swagger UI، بدون أي CDN — `swagger-ui-dist` مثبّتة كـ dependency و`postinstall` بينسخ ملفاتها لـ `public/swagger-ui/`) بتعرض `public/openapi.yaml` (نسخة عن `docs/new/openapi.yaml` الأصلي + إضافة `/uploads/sign`).
 
 **لسه صفر بالكامل:** Edge Functions/Cron، FCM (إرسال Push فعلي)، اختبار الـ endpoints الجديدة بطلبات HTTP حقيقية (راجع القسم 1.3).
 
 ---
 
-## 1. Owner API — أُعيد بناؤه ليطابق `docs/openapi.yaml`
+## 1. Owner API — أُعيد بناؤه ليطابق `docs/new/openapi.yaml`
 
-الأساس المنطقي الكامل موثّق بخطة `docs-openapi-yaml-cozy-wreath` (كانت مبنية بجلسة سابقة). الملخص: العقد المرسل من فريق الموبايل (`docs/openapi.yaml`) شكله مختلف جذرياً عن الـ Owner API القديم (مسارات مسطّحة بدون `/owner`، بدون CRUD تفصيلي بـ `{id}`، response بصيغة JSON خام بدل `{success, data}`).
+الأساس المنطقي الكامل موثّق بخطة `docs-openapi-yaml-cozy-wreath` (كانت مبنية بجلسة سابقة). الملخص: العقد المرسل من فريق الموبايل (`docs/new/openapi.yaml`) شكله مختلف جذرياً عن الـ Owner API القديم (مسارات مسطّحة بدون `/owner`، بدون CRUD تفصيلي بـ `{id}`، response بصيغة JSON خام بدل `{success, data}`).
 
 ### 1.1 المسارات الجديدة — مبنية ومُجمَّعة (`npm run build` ناجح)
 
@@ -51,7 +51,7 @@
 
 ### 1.3 خطوات التحقق (Verification)
 
-- [x] **مقارنة شكل الاستجابة مع `docs/openapi.yaml` حرفياً (أسماء الحقول، required، قيم الـ enums) — تمت لكل الموارد (2026-08-18)**، مو بس الأعلى خطورة. اكتُشف إن 6 من 8 موارد كانت فيها اختلافات جوهرية بأسماء الحقول (`type` بدل `unit_type`, `method` بدل `payment_method`, `category` بدل `expense_type`...) وقيم enums (dashboard alerts كانت مفرد بدل جمع) وتنسيق تواريخ (spec بده حقول `*_label` عربية منسّقة مسبقاً — `1 يناير 2024` — مو ISO خام، ما عدا `Payment.date_label` اللي شكله `2024/05/02`). أُضيف helper مشترك `src/lib/api/date-labels.ts` (تنسيق تواريخ عربي) و`src/lib/api/labels.ts` (تسميات عربية لـ unit_type/expense category/maintenance issue type) واستُخدما لإعادة كتابة كل الـ endpoints والـ validation schemas المرتبطة (`units`, `tenants`, `contracts`, `payments`+`overdue`, `expenses`, `maintenance-requests`, `dashboard/summary`) لتطابق الـ spec حرفياً. `properties` و`user/profile` كانوا مطابقين أصلاً من الجلسة الأولى.
+- [x] **مقارنة شكل الاستجابة مع `docs/new/openapi.yaml` حرفياً (أسماء الحقول، required، قيم الـ enums) — تمت لكل الموارد (2026-08-18)**، مو بس الأعلى خطورة. اكتُشف إن 6 من 8 موارد كانت فيها اختلافات جوهرية بأسماء الحقول (`type` بدل `unit_type`, `method` بدل `payment_method`, `category` بدل `expense_type`...) وقيم enums (dashboard alerts كانت مفرد بدل جمع) وتنسيق تواريخ (spec بده حقول `*_label` عربية منسّقة مسبقاً — `1 يناير 2024` — مو ISO خام، ما عدا `Payment.date_label` اللي شكله `2024/05/02`). أُضيف helper مشترك `src/lib/api/date-labels.ts` (تنسيق تواريخ عربي) و`src/lib/api/labels.ts` (تسميات عربية لـ unit_type/expense category/maintenance issue type) واستُخدما لإعادة كتابة كل الـ endpoints والـ validation schemas المرتبطة (`units`, `tenants`, `contracts`, `payments`+`overdue`, `expenses`, `maintenance-requests`, `dashboard/summary`) لتطابق الـ spec حرفياً. `properties` و`user/profile` كانوا مطابقين أصلاً من الجلسة الأولى.
 - [x] منطق `installments[]` بـ `GET/POST /contracts` صُحّح: `paid`→`paid`, `overdue`→`pending`, `due` مستقبلي→`upcoming`, `due` فات موعده→`pending`.
 - [x] `bucket` صور طلبات الصيانة تحوّل لـ `maintenance-images` (بدل `unit-images` placeholder).
 - [x] `bucket` صور/مستندات المستأجرين تحوّل لـ `tenant-photos`/`tenant-documents` الحقيقيين (بدل `unit-images` placeholder) — كانوا موجودين أصلاً بـ RLS من `migrations/009_tenant_storage_buckets.sql` ومهملين بالغلط.
@@ -75,6 +75,18 @@ Vercel بيحدد حجم الـ request body الكلي لأي Serverless Functi
 - [x] `src/lib/api/upload.ts`: `createSignedUpload()` (تجهيز الرابط) و`resolveUploadedField()` (helper موحّد بيقبل إما `File` خام — المسار القديم، بيعدّي عبر Vercel — أو `string` (path/public URL) من رفع مباشر سابق؛ بيتحقق إن الـ string فعلاً ضمن مجلد الـ owner بنفس الـ bucket قبل ما يوثق فيه).
 - [x] كل الـ create endpoints يلي فيها ملفات (`properties`, `units`, `tenants`, `maintenance-requests`, `payments`) صارت تستخدم `resolveUploadedField()` — تقبل الشكلين (ملف خام أو نص URL) بنفس الحقل، فما في كسر توافق فوري مع أي عميل موجود حالياً.
 - [ ] **لازم تنسيق مع فريق الموبايل**: هاي الخطوة الإضافية (`POST /uploads/sign` → رفع مباشر → إرسال الـ URL) مش موجودة بالـ Dart code الحالي المرسل — لازم يتبنوها بالتطبيق قبل ما تصير فعلياً حل لمشكلة الـ 4.5 ميجا (لحد هلق، أي رفع من التطبيق الحالي لسه بيمر عبر Vercel وبيضل عرضة لنفس الحد).
+
+### 1.6 مصدر Brokers جديد + `/units/vacant-report/send` (2026-08-25)
+
+مصدر كامل ما كان موجود إطلاقاً بالباكاند قبل هلق — أُضيف بالكامل استناداً لـ `docs/new/openapi.yaml` (v0.2.0-draft) وقرارات `docs/new/backend-decisions.md` (نقاط 1، 3، 4):
+
+- [x] Migration `019_brokers_and_vacant_reports` (مُطبَّقة عبر `apply_migration`): جدول `brokers` (نفس نمط `tenants`، عمود الهوية `commercial_license_number` مش `national_id`) + جدول `vacant_unit_reports` (تسجيل كل تقرير مُرسَل) + RLS owner-scoped للاثنين + buckets تخزين `broker-photos` (صور) و`vacant-reports` (PDF فقط، حد 10 ميجا) مع RLS بنفس نمط `tenant-photos`/`payment-receipts`.
+- [x] `src/validations/openapi-create-broker.schema.ts` — يقبل `company_name` كـ empty string ويحوّلها لـ `null` (قرار موثّق بنقطة 3).
+- [x] `GET/POST /brokers` (`src/app/api/v1/brokers/route.ts`) — نفس نمط `tenants/route.ts`.
+- [x] `POST /units/vacant-report/send` (`src/app/api/v1/units/vacant-report/send/route.ts`) — يتحقق `broker_id` موجود (404 لو لأ)، يرفع PDF لـ `vacant-reports`، يسجّل بجدول `vacant_unit_reports`. **آلية التوصيل الفعلي (إيميل/واتساب) لسه TODO صريح بالكود** — القرار مؤجَّل (نقطة 1 بـ `backend-decisions.md`).
+- [x] `database.types.ts` أُعيد توليده (`brokers`, `vacant_unit_reports`) و`npm run build` ناجح.
+- [ ] فحص فعلي بطلبات HTTP (نفس ملاحظة 1.3 — لسه ما تم لأي endpoint جديد).
+- [ ] قرار قناة التوصيل الفعلي لتقرير الوحدات الشاغرة لسه مفتوح.
 
 ### 1.4 القديم تحت `/api/v1/owner/**` — الحالة بعد الحذف (2026-08-18)
 
@@ -149,13 +161,13 @@ Vercel بيحدد حجم الـ request body الكلي لأي Serverless Functi
 - [ ] Automated tests (unit/integration).
 - [ ] نشر المشروع (Vercel أو غيره) + متغيرات بيئة production.
 - [ ] CI/CD (لينت + type-check + build قبل أي دمج).
-- [x] توثيق الـ API — `docs/openapi.yaml` هو المرجع الرسمي المرسل من فريق الموبايل، والـ endpoints الجديدة مبنية لتطابقه حرفياً.
+- [x] توثيق الـ API — `docs/new/openapi.yaml` هو المرجع الرسمي المرسل من فريق الموبايل، والـ endpoints الجديدة مبنية لتطابقه حرفياً.
 
 ---
 
 ## الأولوية المقترحة (بترتيب منطقي)
 
-1. ~~**Owner API rebuild ليطابق `docs/openapi.yaml`**: migrations + types + كل الـ endpoints الجديدة~~ ✅ (البناء ناجح، الحذف تم، التوثيق تم — 2026-08-18).
+1. ~~**Owner API rebuild ليطابق `docs/new/openapi.yaml`**: migrations + types + كل الـ endpoints الجديدة~~ ✅ (البناء ناجح، الحذف تم، التوثيق تم — 2026-08-18).
 2. **فحص الـ endpoints الجديدة بطلبات HTTP حقيقية + مقارنتها بالـ spec حرفياً** (القسم 1.3) — الخطوة الحرجة الجاية قبل تسليم أي شي لفريق الموبايل.
 3. حسم قرارات الـ buckets المعلّقة (tenants, maintenance-requests) والمنطق (`installments[]` mapping).
 4. **Cron/Edge Function + FCM**.

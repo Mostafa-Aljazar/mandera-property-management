@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mandera Properties Management",
+  title: {
+    default: "Mandera Properties Management",
+    template: "%s | Mandera",
+  },
   description:
     "نظام لإدارة العقارات المؤجرة: وحدات، عقود، دفعات، مصروفات، صيانة، وإشعارات تلقائية لأصحاب العقارات",
 };
