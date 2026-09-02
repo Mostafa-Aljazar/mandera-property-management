@@ -133,11 +133,15 @@ export async function POST(request: NextRequest) {
         owner_id: ownerId,
         name: data.name,
         type: data.type,
+        country: data.country,
+        country_code: data.country_code,
         city: data.city,
+        region: data.region || null,
         district: data.district || null,
         address: data.address || null,
         latitude: data.latitude || null,
         longitude: data.longitude || null,
+        description: data.description || null,
         image_url: imageUrl,
       })
       .select()

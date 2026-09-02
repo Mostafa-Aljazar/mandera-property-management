@@ -10,10 +10,72 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      brokers: {
+        Row: {
+          avatar_url: string | null
+          commercial_license_number: string
+          company_name: string | null
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          full_name: string
+          id: string
+          is_verified: boolean
+          mobile: string | null
+          nationality: string | null
+          nationality_code: string | null
+          owner_id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          commercial_license_number: string
+          company_name?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          is_verified?: boolean
+          mobile?: string | null
+          nationality?: string | null
+          nationality_code?: string | null
+          owner_id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          commercial_license_number?: string
+          company_name?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_verified?: boolean
+          mobile?: string | null
+          nationality?: string | null
+          nationality_code?: string | null
+          owner_id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brokers_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           contract_file_url: string | null
@@ -413,8 +475,11 @@ export type Database = {
         Row: {
           address: string | null
           city: string | null
+          country: string | null
+          country_code: string | null
           created_at: string
           deleted_at: string | null
+          description: string | null
           district: string | null
           id: string
           image_url: string | null
@@ -422,14 +487,18 @@ export type Database = {
           longitude: number | null
           name: string
           owner_id: string
+          region: string | null
           type: Database["public"]["Enums"]["property_type"]
           updated_at: string
         }
         Insert: {
           address?: string | null
           city?: string | null
+          country?: string | null
+          country_code?: string | null
           created_at?: string
           deleted_at?: string | null
+          description?: string | null
           district?: string | null
           id?: string
           image_url?: string | null
@@ -437,14 +506,18 @@ export type Database = {
           longitude?: number | null
           name: string
           owner_id: string
+          region?: string | null
           type?: Database["public"]["Enums"]["property_type"]
           updated_at?: string
         }
         Update: {
           address?: string | null
           city?: string | null
+          country?: string | null
+          country_code?: string | null
           created_at?: string
           deleted_at?: string | null
+          description?: string | null
           district?: string | null
           id?: string
           image_url?: string | null
@@ -452,6 +525,7 @@ export type Database = {
           longitude?: number | null
           name?: string
           owner_id?: string
+          region?: string | null
           type?: Database["public"]["Enums"]["property_type"]
           updated_at?: string
         }
@@ -673,6 +747,45 @@ export type Database = {
           {
             foreignKeyName: "users_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vacant_unit_reports: {
+        Row: {
+          broker_id: string
+          created_at: string
+          id: string
+          owner_id: string
+          report_url: string
+        }
+        Insert: {
+          broker_id: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          report_url: string
+        }
+        Update: {
+          broker_id?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          report_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vacant_unit_reports_broker_id_fkey"
+            columns: ["broker_id"]
+            isOneToOne: false
+            referencedRelation: "brokers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vacant_unit_reports_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
