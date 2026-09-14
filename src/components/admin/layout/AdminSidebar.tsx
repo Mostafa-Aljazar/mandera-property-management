@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, UserRound, Users } from "lucide-react";
+import { BarChart3, Home, UserRound, Users } from "lucide-react";
 import { IMG_LOGO } from "@/assets";
 import {
   Sidebar,
@@ -20,6 +20,7 @@ import {
 const nav = [
   { href: "/admin", label: "لوحة التحكم", exact: true, icon: Home },
   { href: "/admin/owners", label: "الملاك", icon: Users },
+  { href: "/admin/reports", label: "تقرير الإيرادات", icon: BarChart3 },
   { href: "/admin/profile", label: "الملف الشخصي", icon: UserRound },
 ] as const;
 
@@ -32,16 +33,16 @@ export function AdminSidebar() {
 
   return (
     <Sidebar side="right" collapsible="icon">
-      <SidebarHeader>
+      <SidebarHeader className="h-16 justify-center px-4 py-0">
         <Link
           href="/admin"
-          className="flex h-10 items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+          className="flex h-full items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
         >
           <Image
             src={IMG_LOGO}
             alt="Mandera Property Management"
-            width={130}
-            height={32}
+            width={140}
+            height={36}
             priority
             unoptimized
             className="h-7 w-auto group-data-[collapsible=icon]:hidden"
@@ -49,11 +50,13 @@ export function AdminSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-1.5 py-3">
         <SidebarGroup>
-          <SidebarGroupLabel>القائمة</SidebarGroupLabel>
+          <SidebarGroupLabel className="mb-1.5 px-2.5 text-[11px] font-semibold tracking-wide text-sidebar-foreground/50 uppercase">
+            القائمة
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {nav.map((item) => {
                 const active = isActivePath(
                   pathname,
@@ -68,6 +71,7 @@ export function AdminSidebar() {
                       isActive={active}
                       tooltip={item.label}
                       render={<Link href={item.href} />}
+                      className="h-11 gap-3 rounded-full px-4 text-[13.5px] font-semibold text-sidebar-foreground/65 [&_svg]:size-[18px] data-active:bg-sidebar-primary data-active:text-sidebar-primary-foreground data-active:shadow-[0_6px_16px_-6px_rgba(237,27,36,0.45)]"
                     >
                       <Icon />
                       <span>{item.label}</span>

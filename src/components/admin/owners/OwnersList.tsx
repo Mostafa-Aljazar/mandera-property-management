@@ -40,18 +40,18 @@ function statusBadge(status: string | null | undefined, isActive: boolean) {
   if (resolved === "pending") {
     return {
       label: "معلّق",
-      className: "border-amber-200 bg-amber-50 text-amber-800",
+      className: "bg-amber-50 text-amber-800",
     };
   }
   if (resolved === "inactive") {
     return {
       label: "معطّل",
-      className: "border-border bg-muted text-muted-foreground",
+      className: "bg-muted text-muted-foreground",
     };
   }
   return {
     label: "نشط",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    className: "bg-emerald-50 text-emerald-700",
   };
 }
 
@@ -97,7 +97,7 @@ function OwnerMobileCard({ owner }: { owner: OwnerListItem }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-1">
-              <Badge variant="outline" className={cn(badge.className)}>
+              <Badge className={cn(badge.className)}>
                 {badge.label}
               </Badge>
               <OwnersActionsMenu
@@ -255,7 +255,7 @@ export function OwnersList({ owners }: { owners: OwnerListItem[] }) {
                   </TableCell>
 
                   <TableCell className="px-5 py-4">
-                    <Badge variant="outline" className={cn(badge.className)}>
+                    <Badge className={cn(badge.className)}>
                       {badge.label}
                     </Badge>
                   </TableCell>

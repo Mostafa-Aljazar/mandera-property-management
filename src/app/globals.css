@@ -118,30 +118,45 @@
 }
 
 /* Admin dashboard brand theme — scoped so it never leaks into the public site/login. */
+/* "Modern flat" direction: light neutral surfaces, red as the one bold accent,
+   soft rounded shadow-based cards instead of hairline borders. */
 [data-admin-theme] {
-  --primary: oklch(0.367 0.063 234.136); /* BRAND.navy #16445B */
+  --primary: oklch(0.603 0.235 26.909); /* BRAND.red #ED1B24 */
   --primary-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.603 0.235 26.909); /* BRAND.red #ED1B24 */
-  --ring: oklch(0.367 0.063 234.136);
+  --destructive: oklch(0.367 0.063 234.136); /* BRAND.navy #16445B */
+  --ring: oklch(0.603 0.235 26.909);
+  --radius: 0.85rem;
 
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.279 0.041 260.031);
-  --sidebar-primary: oklch(0.367 0.063 234.136);
+  --sidebar-primary: oklch(0.603 0.235 26.909);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.367 0.063 234.136 / 0.1);
-  --sidebar-accent-foreground: oklch(0.367 0.063 234.136);
+  --sidebar-accent: oklch(0.603 0.235 26.909 / 0.1);
+  --sidebar-accent-foreground: oklch(0.603 0.235 26.909);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.367 0.063 234.136);
+  --sidebar-ring: oklch(0.603 0.235 26.909);
+}
+
+[data-admin-theme] [data-slot="card"] {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 10px 24px -16px rgba(0, 0, 0, 0.08);
 }
 
 .dark [data-admin-theme] {
-  --primary: oklch(0.55 0.06 234.136);
+  --primary: oklch(0.65 0.22 26.909);
   --primary-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.65 0.22 26.909);
-  --ring: oklch(0.55 0.06 234.136);
-  --sidebar-primary: oklch(0.55 0.06 234.136);
-  --sidebar-accent: oklch(0.55 0.06 234.136 / 0.16);
+  --destructive: oklch(0.55 0.06 234.136);
+  --ring: oklch(0.65 0.22 26.909);
+  --sidebar-primary: oklch(0.65 0.22 26.909);
+  --sidebar-accent: oklch(0.65 0.22 26.909 / 0.16);
   --sidebar-accent-foreground: oklch(0.9 0.02 234.136);
+}
+
+.dark [data-admin-theme] [data-slot="card"] {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 10px 24px -16px rgba(0, 0, 0, 0.5);
 }
 
 @layer base {

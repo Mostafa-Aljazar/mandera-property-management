@@ -41,7 +41,7 @@ export default async function AdminLayout({
   return (
     <SidebarProvider
       data-admin-theme=""
-      style={{ "--sidebar-width": "13.5rem" } as React.CSSProperties}
+      style={{ "--sidebar-width": "15rem" } as React.CSSProperties}
     >
       <AdminSidebar />
       <SidebarInset>
@@ -50,7 +50,9 @@ export default async function AdminLayout({
           avatarUrl={profile.avatar_url}
           initials={initials}
         />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
