@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { startTransition, useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -119,7 +119,9 @@ export default function NewOwnerPage() {
     fd.set("notes", values.notes ?? "");
     if (values.avatar) fd.set("avatar", values.avatar);
     if (values.id_document) fd.set("id_document", values.id_document);
-    formAction(fd);
+    startTransition(() => {
+      formAction(fd);
+    });
   }
 
   if (state.success) {

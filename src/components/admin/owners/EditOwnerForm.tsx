@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
@@ -143,7 +143,9 @@ export function EditOwnerForm({ owner }: { owner: EditOwnerInitial }) {
     fd.set("notes", values.notes ?? "");
     if (values.avatar) fd.set("avatar", values.avatar);
     if (values.id_document) fd.set("id_document", values.id_document);
-    formAction(fd);
+    startTransition(() => {
+      formAction(fd);
+    });
   }
 
   return (

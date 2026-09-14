@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isValidPhoneNumber } from "react-phone-number-input";
+import { isValidPhoneNumber } from "libphonenumber-js";
 
 const MAX_IMAGE = 2 * 1024 * 1024;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
