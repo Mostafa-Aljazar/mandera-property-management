@@ -32,11 +32,11 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar side="right" collapsible="icon">
+    <Sidebar side="right" collapsible="icon" data-admin-theme="">
       <SidebarHeader className="h-16 justify-center px-4 py-0">
         <Link
           href="/admin"
-          className="flex h-full items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+          className="flex h-full items-center justify-center px-0"
         >
           <Image
             src={IMG_LOGO}
@@ -56,7 +56,7 @@ export function AdminSidebar() {
             القائمة
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
+            <SidebarMenu className="gap-2">
               {nav.map((item) => {
                 const active = isActivePath(
                   pathname,

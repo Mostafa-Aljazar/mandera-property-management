@@ -181,13 +181,14 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+      <Sheet open={openMobile} onOpenChange={setOpenMobile}>
         <SheetContent
           dir={dir}
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
           className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          {...props}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
