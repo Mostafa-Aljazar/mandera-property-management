@@ -31,7 +31,12 @@ export async function POST(request: NextRequest) {
       password,
     });
 
-    if (error || !data.session?.access_token || !data.user?.id) {
+    if (
+      error ||
+      !data.session?.access_token ||
+      !data.session?.refresh_token ||
+      !data.user?.id
+    ) {
       return openApiError("بيانات دخول غير صحيحة", 401);
     }
 
@@ -49,6 +54,8 @@ export async function POST(request: NextRequest) {
     return openApiSuccess({
       user_id: data.user.id,
       token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_in: data.session.expires_in,
     });
   } catch (err) {
     console.error("[login]", err);

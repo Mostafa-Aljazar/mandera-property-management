@@ -323,6 +323,40 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /auth/refresh:
+    post:
+      operationId: refresh
+      tags: [Auth]
+      summary: Exchange a refresh token for a new access token
+      description: >-
+        ⚠️ Not present in the Flutter client — added on the backend to pair
+        with LoginResponse.refresh_token. Not yet wired into any Dart
+        repository/cubit; confirm with the mobile team before relying on it.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New access token issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Refresh token is invalid or expired.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /auth/register:
     post:
       operationId: register
@@ -1067,7 +1101,7 @@ components:
         `json['user_id'].toString()`, i.e. the client tolerates either a
         string or a number here (see x-backend-decisions-required:
         id-type-inconsistency); `token` must be a JSON string.
-      required: [user_id, token]
+      required: [user_id, token, refresh_token, expires_in]
       properties:
         user_id:
           type: string
@@ -1078,6 +1112,27 @@ components:
             Opaque bearer token, stored and replayed as
             `Authorization: Bearer <token>` on every subsequent request.
           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refresh_token:
+          type: string
+          description: >-
+            Supabase refresh token, used to obtain a new access token once
+            `token` expires.
+          example: v1.M2QzZjZlYzYtYzQ5OS00...
+        expires_in:
+          type: integer
+          description: Seconds until `token` expires, from the moment it was issued.
+          example: 3600
+
+    RefreshRequest:
+      type: object
+      description: >-
+        Not present in Flutter — added alongside /auth/refresh to consume
+        LoginResponse.refresh_token.
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          example: v1.M2QzZjZlYzYtYzQ5OS00...
 
     RegisterRequest:
       type: object
