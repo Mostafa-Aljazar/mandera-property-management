@@ -1,4 +1,5 @@
 import "server-only";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createRouteClient } from "@/lib/supabase/route";
 import type { IOwnerProfile } from "@/types/owner.type";
 import { apiError } from "./response";
@@ -70,6 +71,20 @@ async function authenticateOwner(request: Request): Promise<InternalAuthResult> 
 
   if (profileError || !profile) return { ok: false, reason: "profile_not_found" };
   if (profile.role !== "owner") return { ok: false, reason: "not_owner" };
+
+  // Self-healing: nothing re-evaluates valid_until on its own once it
+  // passes, so flip an expired-but-still-active account to pending here,
+  // at the moment it actually matters (an authenticated request).
+  const today = new Date().toISOString().slice(0, 10);
+  if (profile.valid_until && profile.valid_until < today && profile.is_active) {
+    await createAdminClient()
+      .from("users")
+      .update({ account_status: "pending", is_active: false })
+      .eq("id", profile.id);
+    profile.account_status = "pending";
+    profile.is_active = false;
+  }
+
   if (profile.deleted_at || !profile.is_active) return { ok: false, reason: "inactive" };
 
   const ownerProfile: IOwnerProfile = {

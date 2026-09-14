@@ -32,6 +32,7 @@ import {
   DeleteOwnerForm,
   ToggleActiveForm,
 } from "@/components/admin/owners/RowActions";
+import { SubscriptionPaymentForm } from "@/components/admin/owners/SubscriptionPaymentForm";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,7 @@ async function getOwnerWithStats(id: string) {
     { count: units },
     { count: tenants },
     { count: activeContracts },
+    { data: subscriptionPayments },
   ] = await Promise.all([
     admin
       .from("properties")
@@ -76,6 +78,11 @@ async function getOwnerWithStats(id: string) {
       .eq("owner_id", id)
       .eq("status", "active")
       .is("deleted_at", null),
+    admin
+      .from("subscription_payments")
+      .select("id, amount, period_start, period_end")
+      .eq("owner_id", id)
+      .order("created_at", { ascending: false }),
   ]);
 
   return {
@@ -86,6 +93,7 @@ async function getOwnerWithStats(id: string) {
       tenants: tenants ?? 0,
       activeContracts: activeContracts ?? 0,
     },
+    subscriptionPayments: subscriptionPayments ?? [],
   };
 }
 
@@ -97,7 +105,7 @@ function statusBadge(
   if (deletedAt) {
     return {
       label: "محذوف",
-      className: "border-destructive/20 bg-destructive/10 text-destructive",
+      className: "bg-destructive/10 text-destructive",
     };
   }
 
@@ -105,18 +113,18 @@ function statusBadge(
   if (resolved === "pending") {
     return {
       label: "معلّق",
-      className: "border-amber-200 bg-amber-50 text-amber-800",
+      className: "bg-amber-50 text-amber-800",
     };
   }
   if (resolved === "inactive") {
     return {
       label: "معطّل",
-      className: "border-border bg-muted text-muted-foreground",
+      className: "bg-muted text-muted-foreground",
     };
   }
   return {
     label: "نشط",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    className: "bg-emerald-50 text-emerald-700",
   };
 }
 
@@ -139,7 +147,7 @@ export default async function OwnerDetailPage({
   const result = await getOwnerWithStats(id);
 
   if (!result) notFound();
-  const { owner, stats } = result;
+  const { owner, stats, subscriptionPayments } = result;
 
   const badge = statusBadge(
     owner.account_status,
@@ -275,7 +283,7 @@ export default async function OwnerDetailPage({
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className={cn(badge.className)}>
+              <Badge className={cn(badge.className)}>
                 {badge.label}
               </Badge>
               <span className="text-xs text-muted-foreground">
@@ -401,6 +409,12 @@ export default async function OwnerDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      <SubscriptionPaymentForm
+        ownerId={owner.id}
+        disabled={!!owner.deleted_at}
+        payments={subscriptionPayments}
+      />
 
       <OwnerNotesForm
         ownerId={owner.id}
