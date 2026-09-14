@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/client";
+import { createRouteClient } from "@/lib/supabase/route";
 import { openApiError, openApiSuccess } from "@/lib/api/openapi-response";
 import { openApiLoginSchema } from "@/validations/openapi-login.schema";
 import { resolveIdentifierToEmail } from "@/lib/api/resolve-identifier";
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const email = emailResolved.email;
 
     // Sign in with Supabase auth
-    const supabase = await createClient();
+    const supabase = createRouteClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
