@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     // Verify the user is an owner (not master_admin or other role)
     const { data: userProfile } = await supabase
       .from("users")
-      .select("role")
+      .select("role, rank")
       .eq("id", data.user.id)
       .single();
 
@@ -56,6 +56,8 @@ export async function POST(request: NextRequest) {
       token: data.session.access_token,
       refresh_token: data.session.refresh_token,
       expires_in: data.session.expires_in,
+      role: userProfile.role,
+      rank: userProfile.rank,
     });
   } catch (err) {
     console.error("[login]", err);

@@ -6,13 +6,14 @@ import { apiError } from "./response";
 import { openApiError } from "./openapi-response";
 
 const OWNER_PROFILE_COLUMNS =
-  "id, role, full_name, email, phone, avatar_url, is_active, account_status, national_id, valid_until, company_name, city, created_at, deleted_at";
+  "id, role, rank, organization_id, full_name, email, phone, avatar_url, is_active, account_status, national_id, valid_until, company_name, city, created_at, deleted_at";
 
 type SupabaseRouteClient = ReturnType<typeof createRouteClient>;
 
 export type AuthedOwnerContext = {
   supabase: SupabaseRouteClient;
   ownerId: string;
+  userId: string;
   profile: IOwnerProfile;
 };
 
@@ -90,6 +91,8 @@ async function authenticateOwner(request: Request): Promise<InternalAuthResult> 
   const ownerProfile: IOwnerProfile = {
     id: profile.id,
     role: profile.role,
+    rank: profile.rank,
+    organization_id: profile.organization_id,
     full_name: profile.full_name,
     email: profile.email,
     phone: profile.phone,
@@ -103,7 +106,15 @@ async function authenticateOwner(request: Request): Promise<InternalAuthResult> 
     created_at: profile.created_at,
   };
 
-  return { ok: true, ctx: { supabase, ownerId: user.id, profile: ownerProfile } };
+  return {
+    ok: true,
+    ctx: {
+      supabase,
+      ownerId: profile.organization_id ?? user.id,
+      userId: user.id,
+      profile: ownerProfile,
+    },
+  };
 }
 
 /**

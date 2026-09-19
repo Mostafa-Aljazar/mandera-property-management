@@ -15,6 +15,8 @@ interface IOwnerSettings {
 interface IOwnerProfile {
   id: string;
   role: Enums<"user_role">;
+  rank: Enums<"user_rank"> | null;
+  organization_id: string | null;
   full_name: string;
   email: string | null;
   phone: string | null;

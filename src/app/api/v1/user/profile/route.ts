@@ -11,12 +11,12 @@ export async function GET(request: NextRequest) {
     const auth = await requireOwnerOpenApi(request);
     if (!auth.ok) return auth.response;
 
-    const { supabase, ownerId } = auth.ctx;
+    const { supabase, userId } = auth.ctx;
 
     const { data: profile, error } = await supabase
       .from("users")
-      .select("id, full_name, job_title, phone, email, avatar_url")
-      .eq("id", ownerId)
+      .select("id, role, rank, full_name, job_title, phone, email, avatar_url")
+      .eq("id", userId)
       .single();
 
     if (error || !profile) {
@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
     }
 
     return openApiSuccess({
+      role: profile.role,
+      rank: profile.rank,
       full_name: profile.full_name || "",
       job_title: profile.job_title || "",
       phone: profile.phone || "",

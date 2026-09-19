@@ -1,4 +1,4 @@
-import { createRouteClient } from "@/lib/supabase/route";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Resolve an identifier (email or phone) to an auth email for login/password-reset.
@@ -13,8 +13,10 @@ export async function resolveIdentifierToEmail(
     return { email: identifier };
   }
 
-  // Treat as phone number — look up in users table
-  const supabase = createRouteClient();
+  // Treat as phone number — look up in users table. Runs pre-login (no
+  // auth.uid() yet), so RLS ("id = auth.uid()") would block an anon client;
+  // this needs the service-role admin client instead.
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("users")
     .select("email")

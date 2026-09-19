@@ -739,7 +739,9 @@ export type Database = {
           national_id: string | null
           notes: string | null
           phone: string | null
+          rank: Database["public"]["Enums"]["user_rank"] | null
           role: Database["public"]["Enums"]["user_role"]
+          organization_id: string | null
           settings: Json
           updated_at: string
           valid_until: string | null
@@ -761,7 +763,9 @@ export type Database = {
           national_id?: string | null
           notes?: string | null
           phone?: string | null
+          rank?: Database["public"]["Enums"]["user_rank"] | null
           role: Database["public"]["Enums"]["user_role"]
+          organization_id?: string | null
           settings?: Json
           updated_at?: string
           valid_until?: string | null
@@ -783,7 +787,9 @@ export type Database = {
           national_id?: string | null
           notes?: string | null
           phone?: string | null
+          rank?: Database["public"]["Enums"]["user_rank"] | null
           role?: Database["public"]["Enums"]["user_role"]
+          organization_id?: string | null
           settings?: Json
           updated_at?: string
           valid_until?: string | null
@@ -897,6 +903,7 @@ export type Database = {
         | "villa"
         | "warehouse"
       user_role: "master_admin" | "owner"
+      user_rank: "manager" | "administrator" | "assistant"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1082,6 +1089,7 @@ export const Constants = {
         "warehouse",
       ],
       user_role: ["master_admin", "owner"],
+      user_rank: ["manager", "administrator", "assistant"],
     },
   },
 } as const

@@ -29,11 +29,19 @@ export async function POST(request: NextRequest) {
       return openApiError("رمز التحديث غير صالح أو منتهي", 401);
     }
 
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("role, rank")
+      .eq("id", data.user.id)
+      .single();
+
     return openApiSuccess({
       user_id: data.user.id,
       token: data.session.access_token,
       refresh_token: data.session.refresh_token,
       expires_in: data.session.expires_in,
+      role: userProfile?.role ?? "owner",
+      rank: userProfile?.rank ?? null,
     });
   } catch (err) {
     console.error("[refresh]", err);

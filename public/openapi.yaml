@@ -21,11 +21,13 @@
 # `x-backend-decisions-required` block in `info`, not silently resolved.
 #
 # BACKEND DECISIONS REQUIRED (see also info.x-backend-decisions-required):
-#  1. POST /auth/login is defined but never actually called by the Flutter
-#     app — AuthRepository.login() returns a hardcoded demo session instead
-#     of hitting the network (see the TODO in auth_repository.dart). This
-#     schema is inferred purely from LoginRequest/LoginResponse; unverified
-#     against any live behavior.
+#  1. RESOLVED — POST /auth/login and POST /auth/refresh are now fully
+#     implemented and live (src/app/api/v1/auth/login/route.ts,
+#     src/app/api/v1/auth/refresh/route.ts), backed by Supabase Auth. This
+#     note originally flagged that the Flutter client's AuthRepository.login()
+#     returned a hardcoded demo session instead of hitting the network; that
+#     no longer describes the backend's behavior, only historical mobile-app
+#     state at the time this file was first drafted.
 #  2. POST /auth/send-otp and POST /auth/verify-otp are declared in
 #     endpoint.dart but are not referenced by any repository, cubit, or
 #     screen — zero request/response models exist for them. The schemas
@@ -163,9 +165,9 @@ info:
   x-backend-decisions-required:
     - id: login-not-wired
       summary: >-
-        POST /auth/login is defined but the Flutter client never actually
-        calls it — a hardcoded demo session is returned instead. Schema is
-        inferred, unverified against live behavior.
+        RESOLVED — POST /auth/login and POST /auth/refresh are implemented
+        and live, backed by Supabase Auth (email/phone identifier, owner
+        role + rank, refresh_token). No longer inferred/unverified.
     - id: otp-endpoints-unused
       summary: >-
         auth/send-otp and auth/verify-otp have no consuming Flutter code
@@ -275,6 +277,8 @@ tags:
     description: Tenant records and their lease/document summaries.
   - name: Brokers
     description: Real estate broker/agency directory.
+  - name: Team
+    description: Company team members managed by the owner account.
   - name: Properties
     description: Property (building/compound) records.
   - name: Units
@@ -308,33 +312,33 @@ paths:
       tags: [Auth]
       summary: Log in with an identifier (email/phone) and password
       description: >-
-        ⚠️ Not actually called by the current Flutter app — see
-        x-backend-decisions-required: login-not-wired. Schema inferred from
-        LoginRequest/LoginResponse only.
+        Implemented and live — authenticates against Supabase Auth, resolves
+        a phone identifier to its account email, and requires role=owner.
+        Returns token, refresh_token, expires_in, role, and rank.
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: Authenticated successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
           description: Invalid identifier or password.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   /auth/refresh:
     post:
@@ -342,33 +346,34 @@ paths:
       tags: [Auth]
       summary: Exchange a refresh token for a new access token
       description: >-
-        Backend addition, not in the mobile team's original file — pairs
-        with LoginResponse.refresh_token. Not yet wired into any Dart
-        repository/cubit; confirm with the mobile team before relying on it.
+        Implemented and live — backend addition beyond the mobile team's
+        original file, pairing with LoginResponse.refresh_token. Exchanges a
+        Supabase refresh token for a new session (token, refresh_token,
+        expires_in, role, rank).
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshRequest'
+              $ref: "#/components/schemas/RefreshRequest"
       responses:
-        '200':
+        "200":
           description: New access token issued.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
           description: Refresh token is invalid or expired.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   /auth/register:
     post:
@@ -385,20 +390,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterRequest'
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
-        '201':
+        "201":
           description: Account created.
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
           description: An account with this email or phone already exists.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   /auth/forgot-password:
     post:
@@ -414,14 +419,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ForgotPasswordRequest'
+              $ref: "#/components/schemas/ForgotPasswordRequest"
       responses:
-        '200':
+        "200":
           description: Reset instructions sent (if the identifier exists).
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/ServerError'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   /auth/send-otp:
     post:
@@ -446,14 +451,14 @@ paths:
                 identifier:
                   type: string
                   description: Email or phone to send the OTP to (guessed field name).
-                  example: '+966501234567'
+                  example: "+966501234567"
       responses:
-        '200':
+        "200":
           description: OTP sent.
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/ServerError'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   /auth/verify-otp:
     post:
@@ -475,22 +480,22 @@ paths:
               properties:
                 identifier:
                   type: string
-                  example: '+966501234567'
+                  example: "+966501234567"
                 code:
                   type: string
                   description: The OTP code entered by the user (guessed field name).
-                  example: '123456'
+                  example: "123456"
       responses:
-        '200':
+        "200":
           description: OTP verified.
-        '400':
+        "400":
           description: Invalid or expired code.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Profile
@@ -505,16 +510,16 @@ paths:
         ProfileRepository.getProfile). No fromJson exists on UserProfile —
         schema is INFERRED from the model's field names.
       responses:
-        '200':
+        "200":
           description: The current user's profile.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Tenants
@@ -529,18 +534,18 @@ paths:
         TenantsRepository.getTenants). Called with no parameters — search/
         filter happen client-side. Tenant has no fromJson; schema INFERRED.
       responses:
-        '200':
+        "200":
           description: All tenants.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Tenant'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                  $ref: "#/components/schemas/Tenant"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
     post:
       operationId: createTenant
       tags: [Tenants]
@@ -555,20 +560,20 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateTenantRequest'
+              $ref: "#/components/schemas/CreateTenantRequest"
       responses:
-        '201':
+        "201":
           description: Tenant created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Tenant'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/Tenant"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Brokers
@@ -584,18 +589,18 @@ paths:
         search happens client-side over the full list. Broker has no
         fromJson; schema INFERRED.
       responses:
-        '200':
+        "200":
           description: All brokers.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Broker'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                  $ref: "#/components/schemas/Broker"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
     post:
       operationId: createBroker
       tags: [Brokers]
@@ -612,20 +617,69 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateBrokerRequest'
+              $ref: "#/components/schemas/CreateBrokerRequest"
       responses:
-        '201':
+        "201":
           description: Broker created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Broker'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/Broker"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  # ===========================================================================
+  # Team
+  # ===========================================================================
+  /team-members:
+    get:
+      operationId: getTeamMembers
+      tags: [Team]
+      summary: List the company's team members
+      responses:
+        "200":
+          description: Team members in the authenticated owner's company.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamMember"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createTeamMember
+      tags: [Team]
+      summary: Create a team member account (manager, administrator, or assistant)
+      description: >-
+        Only a manager may create team members. The organization is derived
+        from the authenticated manager; it is never supplied by the client.
+        The new account has role `owner` and any rank — `manager`,
+        `administrator`, or `assistant` — with no limit on how many accounts
+        of a given rank (including `manager`) a company may have.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamMemberRequest"
+      responses:
+        "201":
+          description: Team member created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamMember"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Only a manager can create team members.
+        "409":
+          description: Email already exists.
 
   # ===========================================================================
   # Properties
@@ -641,16 +695,16 @@ paths:
         both have an explicit fromJson in the Dart code — this schema is
         EXACT, not inferred.
       responses:
-        '200':
+        "200":
           description: Properties summary and list.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PropertiesSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/PropertiesSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
     post:
       operationId: createProperty
       tags: [Properties]
@@ -664,20 +718,20 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreatePropertyRequest'
+              $ref: "#/components/schemas/CreatePropertyRequest"
       responses:
-        '201':
+        "201":
           description: Property created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Property'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/Property"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Units
@@ -694,18 +748,18 @@ paths:
         the maintenance/expense create forms). No fromJson on Unit; schema
         INFERRED.
       responses:
-        '200':
+        "200":
           description: All units.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Unit'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                  $ref: "#/components/schemas/Unit"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
     post:
       operationId: createUnit
       tags: [Units]
@@ -718,20 +772,20 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateUnitRequest'
+              $ref: "#/components/schemas/CreateUnitRequest"
       responses:
-        '201':
+        "201":
           description: Unit created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Unit'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/Unit"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Uploads (backend addition — not in the mobile team's original file)
@@ -758,20 +812,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UploadSignRequest'
+              $ref: "#/components/schemas/UploadSignRequest"
       responses:
-        '200':
+        "200":
           description: Signed upload URL ready to use.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UploadSignResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/UploadSignResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   /units/vacant-report/send:
     post:
@@ -791,22 +845,22 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SendVacantUnitsReportRequest'
+              $ref: "#/components/schemas/SendVacantUnitsReportRequest"
       responses:
-        '200':
+        "200":
           description: Report delivered.
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
           description: broker_id does not match an existing broker.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Payments
@@ -821,16 +875,16 @@ paths:
         PaymentsRepository.getPayments). No fromJson on Payment/
         PaymentsSummary; schema INFERRED.
       responses:
-        '200':
+        "200":
           description: Payments summary and list.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentsSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/PaymentsSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
     post:
       operationId: createPayment
       tags: [Payments]
@@ -844,20 +898,20 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreatePaymentRequest'
+              $ref: "#/components/schemas/CreatePaymentRequest"
       responses:
-        '201':
+        "201":
           description: Payment recorded.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Payment'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/Payment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   /payments/overdue:
     get:
@@ -869,16 +923,16 @@ paths:
         OverdueRepository.getOverdueSummary). No fromJson on
         OverdueSummary/OverdueTenant; schema INFERRED.
       responses:
-        '200':
+        "200":
           description: Overdue summary and tenant list.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OverdueSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/OverdueSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Contracts
@@ -893,18 +947,18 @@ paths:
         ContractsRepository.getContracts). No fromJson on Contract; schema
         INFERRED.
       responses:
-        '200':
+        "200":
           description: All contracts.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Contract'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                  $ref: "#/components/schemas/Contract"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
     post:
       operationId: createContract
       tags: [Contracts]
@@ -920,20 +974,20 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateContractRequest'
+              $ref: "#/components/schemas/CreateContractRequest"
       responses:
-        '201':
+        "201":
           description: Contract created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contract'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/Contract"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Expenses
@@ -948,18 +1002,18 @@ paths:
         ExpensesRepository.getExpenses). No fromJson on Expense; schema
         INFERRED.
       responses:
-        '200':
+        "200":
           description: All expenses.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Expense'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                  $ref: "#/components/schemas/Expense"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
     post:
       operationId: createExpense
       tags: [Expenses]
@@ -975,20 +1029,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateExpenseRequest'
+              $ref: "#/components/schemas/CreateExpenseRequest"
       responses:
-        '201':
+        "201":
           description: Expense recorded.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Expense'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/Expense"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Maintenance
@@ -1005,18 +1059,18 @@ paths:
         no `category` field — see x-backend-decisions-required:
         maintenance-request-missing-category.
       responses:
-        '200':
+        "200":
           description: All maintenance requests.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/MaintenanceRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                  $ref: "#/components/schemas/MaintenanceRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
     post:
       operationId: createMaintenanceRequest
       tags: [Maintenance]
@@ -1030,20 +1084,20 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/CreateMaintenanceRequest'
+              $ref: "#/components/schemas/CreateMaintenanceRequest"
       responses:
-        '201':
+        "201":
           description: Maintenance request created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MaintenanceRequest'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/MaintenanceRequest"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
   # ===========================================================================
   # Dashboard
@@ -1060,16 +1114,16 @@ paths:
         DashboardFinancialSummary, RevenuePoint) have explicit fromJson —
         this schema is EXACT, not inferred.
       responses:
-        '200':
+        "200":
           description: Dashboard summary.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/ServerError'
+                $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/ServerError"
 
 components:
   securitySchemes:
@@ -1090,19 +1144,19 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
       description: Missing or invalid bearer token.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     ServerError:
       description: Unexpected server error.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
     # =========================================================================
@@ -1154,11 +1208,11 @@ components:
         `json['user_id'].toString()`, i.e. the client tolerates either a
         string or a number here (see x-backend-decisions-required:
         id-type-inconsistency); `token` must be a JSON string.
-      required: [user_id, token, refresh_token, expires_in]
+      required: [user_id, token, refresh_token, expires_in, role, rank]
       properties:
         user_id:
           type: string
-          example: '42'
+          example: "42"
         token:
           type: string
           description: >-
@@ -1175,6 +1229,13 @@ components:
           type: integer
           description: Seconds until `token` expires, from the moment it was issued.
           example: 3600
+        role:
+          type: string
+          enum: [owner, master_admin]
+        rank:
+          allOf:
+            - $ref: "#/components/schemas/UserRank"
+          nullable: true
 
     RefreshRequest:
       type: object
@@ -1201,7 +1262,7 @@ components:
           example: ahmed.m@example.com
         phone:
           type: string
-          example: '+966501234567'
+          example: "+966501234567"
         password:
           type: string
           format: password
@@ -1225,7 +1286,7 @@ components:
       description: >-
         INFERRED — UserProfile has no fromJson; field names snake_cased
         from the Dart model.
-      required: [full_name, job_title, phone, email, avatar_url]
+      required: [role, rank, full_name, job_title, phone, email, avatar_url]
       properties:
         full_name:
           type: string
@@ -1235,7 +1296,7 @@ components:
           example: مدير عقارات أول
         phone:
           type: string
-          example: '+966 50 123 4567'
+          example: "+966 50 123 4567"
         email:
           type: string
           format: email
@@ -1244,6 +1305,58 @@ components:
           type: string
           format: uri
           example: https://i.pravatar.cc/150?img=12
+        role:
+          type: string
+          enum: [owner, master_admin]
+        rank:
+          allOf:
+            - $ref: "#/components/schemas/UserRank"
+          nullable: true
+
+    UserRank:
+      type: string
+      description: Company position, separate from the account role.
+      enum: [manager, administrator, assistant]
+
+    TeamMember:
+      type: object
+      required: [id, full_name, email, phone, role, rank]
+      properties:
+        id:
+          type: string
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [owner]
+        rank:
+          $ref: "#/components/schemas/UserRank"
+        created_at:
+          type: string
+          format: date-time
+
+    CreateTeamMemberRequest:
+      type: object
+      required: [full_name, email, phone, password, rank]
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        password:
+          type: string
+          format: password
+          minLength: 8
+        rank:
+          $ref: "#/components/schemas/UserRank"
 
     # =========================================================================
     # Tenants
@@ -1308,7 +1421,7 @@ components:
           type: array
           default: []
           items:
-            $ref: '#/components/schemas/TenantDocument'
+            $ref: "#/components/schemas/TenantDocument"
 
     Tenant:
       type: object
@@ -1327,13 +1440,13 @@ components:
       properties:
         id:
           type: string
-          example: '1'
+          example: "1"
         full_name:
           type: string
           example: أحمد محمد عبد الله
         national_id:
           type: string
-          example: '1234567890'
+          example: "1234567890"
         phone:
           type: string
           example: 4567 123 050
@@ -1363,7 +1476,7 @@ components:
         is_rent_paid:
           type: boolean
         status:
-          $ref: '#/components/schemas/TenantStatus'
+          $ref: "#/components/schemas/TenantStatus"
         overdue_label:
           type: string
           nullable: true
@@ -1373,7 +1486,7 @@ components:
           type: object
           nullable: true
           allOf:
-            - $ref: '#/components/schemas/TenantContract'
+            - $ref: "#/components/schemas/TenantContract"
 
     CreateTenantRequest:
       type: object
@@ -1438,7 +1551,7 @@ components:
       properties:
         id:
           type: string
-          example: '1'
+          example: "1"
         full_name:
           type: string
           example: عبد الرحمن سعيد القحطاني
@@ -1448,13 +1561,13 @@ components:
           example: شركة القحطاني العقارية
         commercial_license_number:
           type: string
-          example: '1122334455'
+          example: "1122334455"
         phone:
           type: string
           example: 2233 456 011
         mobile:
           type: string
-          example: '966502233445'
+          example: "966502233445"
         email:
           type: string
           format: email
@@ -1546,7 +1659,7 @@ components:
           description: >-
             Parsed via `json['id'].toString()` — backend may send string or
             number (see x-backend-decisions-required: id-type-inconsistency).
-          example: '1'
+          example: "1"
         name:
           type: string
           example: برج الياسمين
@@ -1559,7 +1672,7 @@ components:
         image_url:
           type: string
           format: uri
-          default: ''
+          default: ""
           example: https://picsum.photos/seed/al-yasmin-tower/600/400
         total_units:
           type: integer
@@ -1605,7 +1718,7 @@ components:
         properties:
           type: array
           items:
-            $ref: '#/components/schemas/Property'
+            $ref: "#/components/schemas/Property"
 
     CreatePropertyRequest:
       type: object
@@ -1617,7 +1730,7 @@ components:
         name:
           type: string
         type:
-          $ref: '#/components/schemas/PropertyType'
+          $ref: "#/components/schemas/PropertyType"
         country_code:
           type: string
           description: ISO 3166-1 alpha-2.
@@ -1675,7 +1788,8 @@ components:
       type: object
       description: >-
         INFERRED — the unit's active lease, shown on its details screen.
-      required: [tenant_name, duration_months, end_label, monthly_rent, amount_due]
+      required:
+        [tenant_name, duration_months, end_label, monthly_rent, amount_due]
       properties:
         tenant_name:
           type: string
@@ -1713,21 +1827,21 @@ components:
       properties:
         id:
           type: string
-          example: '101'
+          example: "101"
         property_id:
           type: string
-          example: '1'
+          example: "1"
         property_name:
           type: string
           description: Denormalized for display; not authoritative — see property_id.
           example: برج الياسمين
         unit_number:
           type: string
-          example: '101'
+          example: "101"
         type:
-          $ref: '#/components/schemas/UnitType'
+          $ref: "#/components/schemas/UnitType"
         status:
-          $ref: '#/components/schemas/UnitStatus'
+          $ref: "#/components/schemas/UnitStatus"
         floor:
           type: integer
           example: 1
@@ -1753,14 +1867,14 @@ components:
           type: object
           nullable: true
           allOf:
-            - $ref: '#/components/schemas/UnitContract'
+            - $ref: "#/components/schemas/UnitContract"
         rent_amount:
           type: integer
           default: 0
           example: 5000
         rent_period:
           allOf:
-            - $ref: '#/components/schemas/RentPeriod'
+            - $ref: "#/components/schemas/RentPeriod"
           default: monthly
         maintenance_note:
           type: string
@@ -1790,15 +1904,15 @@ components:
       properties:
         property_id:
           type: string
-          example: '1'
+          example: "1"
         floor:
           type: integer
           example: 3
         unit_number:
           type: string
-          example: '302'
+          example: "302"
         type:
-          $ref: '#/components/schemas/UnitType'
+          $ref: "#/components/schemas/UnitType"
         area:
           type: integer
           example: 130
@@ -1817,7 +1931,7 @@ components:
           type: integer
           example: 66000
         status:
-          $ref: '#/components/schemas/UnitStatus'
+          $ref: "#/components/schemas/UnitStatus"
         photos:
           type: array
           items:
@@ -1837,7 +1951,7 @@ components:
         broker_id:
           type: string
           description: References Broker.id.
-          example: '1'
+          example: "1"
         report:
           type: string
           format: binary
@@ -1870,7 +1984,7 @@ components:
       properties:
         id:
           type: string
-          example: '1'
+          example: "1"
         payer_name:
           type: string
           example: أحمد محمد
@@ -1878,7 +1992,7 @@ components:
           type: string
           example: وحدة 101 - برج الياسمين
         method:
-          $ref: '#/components/schemas/PaymentMethod'
+          $ref: "#/components/schemas/PaymentMethod"
         amount:
           type: integer
           description: >-
@@ -1886,11 +2000,11 @@ components:
             — see x-backend-decisions-required: currency-type-inconsistency.
           example: 5000
         status:
-          $ref: '#/components/schemas/PaymentStatus'
+          $ref: "#/components/schemas/PaymentStatus"
         date_label:
           type: string
           description: Pre-formatted date string (see date-fields-are-preformatted-labels).
-          example: '2024/05/02'
+          example: "2024/05/02"
 
     PaymentsSummary:
       type: object
@@ -1913,7 +2027,7 @@ components:
         payments:
           type: array
           items:
-            $ref: '#/components/schemas/Payment'
+            $ref: "#/components/schemas/Payment"
 
     CreatePaymentRequest:
       type: object
@@ -1922,14 +2036,15 @@ components:
         form-data (optional receipt image). `unit_label` is a free-text
         display label chosen from a client-side unit list, not a unit id —
         this is how the current Flutter form is wired.
-      required: [tenant_id, property_id, unit_label, amount, payment_date, method]
+      required:
+        [tenant_id, property_id, unit_label, amount, payment_date, method]
       properties:
         tenant_id:
           type: string
-          example: '1'
+          example: "1"
         property_id:
           type: string
-          example: '1'
+          example: "1"
         unit_label:
           type: string
           example: وحدة 101 - برج الياسمين
@@ -1942,7 +2057,7 @@ components:
           format: date-time
           description: DateTime.toIso8601String() from a date picker (time is midnight).
         method:
-          $ref: '#/components/schemas/PaymentMethod'
+          $ref: "#/components/schemas/PaymentMethod"
         reference_number:
           type: string
           nullable: true
@@ -1973,7 +2088,7 @@ components:
       properties:
         id:
           type: string
-          example: '1'
+          example: "1"
         name:
           type: string
           example: أحمد محمد
@@ -1986,7 +2101,7 @@ components:
           example: وحدة 101 - برج الياسمين
         phone:
           type: string
-          example: '+966501234567'
+          example: "+966501234567"
         amount_overdue:
           type: integer
           example: 5000
@@ -2027,7 +2142,7 @@ components:
         tenants:
           type: array
           items:
-            $ref: '#/components/schemas/OverdueTenant'
+            $ref: "#/components/schemas/OverdueTenant"
 
     # =========================================================================
     # Contracts
@@ -2057,7 +2172,7 @@ components:
           type: integer
           example: 5000
         status:
-          $ref: '#/components/schemas/InstallmentStatus'
+          $ref: "#/components/schemas/InstallmentStatus"
 
     Contract:
       type: object
@@ -2074,9 +2189,9 @@ components:
       properties:
         id:
           type: string
-          example: '1'
+          example: "1"
         status:
-          $ref: '#/components/schemas/ContractStatus'
+          $ref: "#/components/schemas/ContractStatus"
         property_name:
           type: string
           example: برج الياسمين
@@ -2111,7 +2226,7 @@ components:
           type: array
           default: []
           items:
-            $ref: '#/components/schemas/ContractInstallment'
+            $ref: "#/components/schemas/ContractInstallment"
 
     CreateContractRequest:
       type: object
@@ -2134,13 +2249,13 @@ components:
       properties:
         tenant_id:
           type: string
-          example: '1'
+          example: "1"
         property_id:
           type: string
-          example: '1'
+          example: "1"
         unit_id:
           type: string
-          example: '101'
+          example: "101"
         start_date:
           type: string
           format: date-time
@@ -2186,7 +2301,7 @@ components:
       properties:
         id:
           type: string
-          example: '1'
+          example: "1"
         title:
           type: string
           example: تصليح تكييف
@@ -2203,7 +2318,7 @@ components:
           type: string
           example: 12 أكتوبر 2023
         category:
-          $ref: '#/components/schemas/ExpenseCategory'
+          $ref: "#/components/schemas/ExpenseCategory"
 
     CreateExpenseRequest:
       type: object
@@ -2216,12 +2331,12 @@ components:
       properties:
         property_id:
           type: string
-          example: '1'
+          example: "1"
         unit_id:
           type: string
-          example: '101'
+          example: "101"
         category:
-          $ref: '#/components/schemas/ExpenseCategory'
+          $ref: "#/components/schemas/ExpenseCategory"
         amount:
           type: number
           format: double
@@ -2290,7 +2405,7 @@ components:
       properties:
         id:
           type: string
-          example: '1'
+          example: "1"
         title:
           type: string
           example: تصليح مكيف
@@ -2301,9 +2416,9 @@ components:
           type: string
           example: برج الياسمين - شقة 402
         priority:
-          $ref: '#/components/schemas/MaintenancePriority'
+          $ref: "#/components/schemas/MaintenancePriority"
         status:
-          $ref: '#/components/schemas/MaintenanceStatus'
+          $ref: "#/components/schemas/MaintenanceStatus"
         date_label:
           type: string
           example: 12 أكتوبر 2023
@@ -2317,14 +2432,14 @@ components:
       properties:
         property_id:
           type: string
-          example: '1'
+          example: "1"
         unit_id:
           type: string
-          example: '101'
+          example: "101"
         category:
-          $ref: '#/components/schemas/MaintenanceCategory'
+          $ref: "#/components/schemas/MaintenanceCategory"
         priority:
-          $ref: '#/components/schemas/MaintenancePriority'
+          $ref: "#/components/schemas/MaintenancePriority"
         description:
           type: string
           example: تسرب مياه من السقف في غرفة المعيشة
@@ -2353,7 +2468,7 @@ components:
       required: [type, count]
       properties:
         type:
-          $ref: '#/components/schemas/DashboardAlertType'
+          $ref: "#/components/schemas/DashboardAlertType"
         count:
           type: integer
           example: 3
@@ -2432,15 +2547,15 @@ components:
         alerts:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardAlert'
+            $ref: "#/components/schemas/DashboardAlert"
         stats:
-          $ref: '#/components/schemas/DashboardStats'
+          $ref: "#/components/schemas/DashboardStats"
         financial:
-          $ref: '#/components/schemas/DashboardFinancialSummary'
+          $ref: "#/components/schemas/DashboardFinancialSummary"
         revenue_points:
           type: array
           items:
-            $ref: '#/components/schemas/RevenuePoint'
+            $ref: "#/components/schemas/RevenuePoint"
 
     # =========================================================================
     # Uploads (backend addition)
@@ -2461,7 +2576,7 @@ components:
       required: [bucket, content_type]
       properties:
         bucket:
-          $ref: '#/components/schemas/UploadBucket'
+          $ref: "#/components/schemas/UploadBucket"
         content_type:
           type: string
           description: >-
@@ -2475,7 +2590,7 @@ components:
       required: [bucket, path, token, signed_url, public_url]
       properties:
         bucket:
-          $ref: '#/components/schemas/UploadBucket'
+          $ref: "#/components/schemas/UploadBucket"
         path:
           type: string
           description: Storage path the file will live at (owner-scoped).
